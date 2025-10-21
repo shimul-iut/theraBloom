@@ -1,4 +1,4 @@
-# Therapy Center Management Platform
+# theraBloom - Therapy Center Management Platform
 
 A comprehensive multi-tenant platform for managing therapy centers, including patient management, scheduling, payments, progress tracking, and more.
 
@@ -44,8 +44,8 @@ A comprehensive multi-tenant platform for managing therapy centers, including pa
 ### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
-cd therapy-center-platform
+git clone https://github.com/shimul-iut/theraBloom.git
+cd theraBloom
 ```
 
 ### 2. Environment Setup
@@ -115,7 +115,7 @@ npm run dev
 ### Project Structure
 
 ```
-therapy-center-platform/
+theraBloom/
 ├── backend/                 # Backend API
 │   ├── src/
 │   │   ├── config/         # Configuration files
