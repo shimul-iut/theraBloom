@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import {
+  formatErrorForDisplay,
+  isSchedulingConflict,
+  getConflictDetails,
+} from '@/lib/error-handler';
 
 export interface Session {
   id: string;
@@ -120,7 +125,20 @@ export function useCreateSession() {
       toast.success('Session created successfully');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error?.message || 'Failed to create session');
+      // Check if it's a scheduling conflict
+      if (isSchedulingConflict(error)) {
+        const conflictDetails = getConflictDetails(error);
+        toast.error(conflictDetails.message, {
+          duration: 5000,
+          description:
+            conflictDetails.type === 'therapist'
+              ? 'The therapist has another session at this time. Please select a different time slot.'
+              : 'The patient has another session at this time. Please select a different time slot.',
+        });
+      } else {
+        // Use the error handler for other errors
+        toast.error(formatErrorForDisplay(error));
+      }
     },
   });
 }
@@ -139,7 +157,20 @@ export function useUpdateSession(id: string) {
       toast.success('Session updated successfully');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error?.message || 'Failed to update session');
+      // Check if it's a scheduling conflict
+      if (isSchedulingConflict(error)) {
+        const conflictDetails = getConflictDetails(error);
+        toast.error(conflictDetails.message, {
+          duration: 5000,
+          description:
+            conflictDetails.type === 'therapist'
+              ? 'The therapist has another session at this time. Please select a different time slot.'
+              : 'The patient has another session at this time. Please select a different time slot.',
+        });
+      } else {
+        // Use the error handler for other errors
+        toast.error(formatErrorForDisplay(error));
+      }
     },
   });
 }
@@ -158,7 +189,7 @@ export function useCancelSession(id: string) {
       toast.success('Session cancelled successfully');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error?.message || 'Failed to cancel session');
+      toast.error(formatErrorForDisplay(error));
     },
   });
 }
