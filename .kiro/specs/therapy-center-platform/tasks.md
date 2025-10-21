@@ -230,6 +230,8 @@ This implementation plan breaks down the therapy center management platform into
     - _Requirements: 2.1, 3.1, 3.4, 3.6, 3.7, 3.9_
 
 - [ ] 8. Session Management Module
+
+
   - [x] 8.1 Create session service layer
 
 
@@ -268,12 +270,17 @@ This implementation plan breaks down the therapy center management platform into
     - _Requirements: 6.8, 6.9, 6.11_
   
 
-  - [ ] 8.4 Build session payment API endpoints
+  - [x] 8.4 Build session payment API endpoints
+
     - GET /api/v1/sessions/:id/payments - Get session payments
     - POST /api/v1/sessions/:id/payments - Record partial payment
     - _Requirements: 6.8, 6.9_
   
-  - [ ] 8.5 Create Zod validation schemas for sessions
+
+
+  - [x] 8.5 Create Zod validation schemas for sessions
+
+
     - Define session creation schema
     - Define session update schema
     - Define payment recording schema

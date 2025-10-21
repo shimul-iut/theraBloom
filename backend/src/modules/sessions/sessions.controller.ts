@@ -142,11 +142,21 @@ export class SessionsController {
           });
         }
 
-        if (error.message.includes('already has a session')) {
+        if (error.message.includes('Therapist already has a session')) {
           return res.status(409).json({
             success: false,
             error: {
-              code: 'SCHEDULING_CONFLICT',
+              code: 'THERAPIST_SCHEDULING_CONFLICT',
+              message: error.message,
+            },
+          });
+        }
+
+        if (error.message.includes('Patient already has a session')) {
+          return res.status(409).json({
+            success: false,
+            error: {
+              code: 'PATIENT_SCHEDULING_CONFLICT',
               message: error.message,
             },
           });
@@ -224,11 +234,21 @@ export class SessionsController {
           });
         }
 
-        if (error.message.includes('already has a session')) {
+        if (error.message.includes('Therapist already has a session')) {
           return res.status(409).json({
             success: false,
             error: {
-              code: 'SCHEDULING_CONFLICT',
+              code: 'THERAPIST_SCHEDULING_CONFLICT',
+              message: error.message,
+            },
+          });
+        }
+
+        if (error.message.includes('Patient already has a session')) {
+          return res.status(409).json({
+            success: false,
+            error: {
+              code: 'PATIENT_SCHEDULING_CONFLICT',
               message: error.message,
             },
           });

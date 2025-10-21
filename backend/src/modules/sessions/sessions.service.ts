@@ -180,8 +180,8 @@ export class SessionsService {
       throw new Error('Therapist is not available at the requested time');
     }
 
-    // Check for scheduling conflicts
-    const hasConflict = await this.checkSchedulingConflict(
+    // Check for therapist scheduling conflicts
+    const hasTherapistConflict = await this.checkTherapistSchedulingConflict(
       tenantId,
       input.therapistId,
       scheduledDate,
@@ -189,8 +189,21 @@ export class SessionsService {
       input.endTime
     );
 
-    if (hasConflict) {
+    if (hasTherapistConflict) {
       throw new Error('Therapist already has a session scheduled at this time');
+    }
+
+    // Check for patient scheduling conflicts
+    const hasPatientConflict = await this.checkPatientSchedulingConflict(
+      tenantId,
+      input.patientId,
+      scheduledDate,
+      input.startTime,
+      input.endTime
+    );
+
+    if (hasPatientConflict) {
+      throw new Error('Patient already has a session scheduled at this time');
     }
 
     // Get pricing (therapist-specific or default)
@@ -301,8 +314,8 @@ export class SessionsService {
         throw new Error('Therapist is not available at the requested time');
       }
 
-      // Check for conflicts (excluding current session)
-      const hasConflict = await this.checkSchedulingConflict(
+      // Check for therapist conflicts (excluding current session)
+      const hasTherapistConflict = await this.checkTherapistSchedulingConflict(
         tenantId,
         existing.therapistId,
         scheduledDate,
@@ -311,8 +324,22 @@ export class SessionsService {
         sessionId
       );
 
-      if (hasConflict) {
+      if (hasTherapistConflict) {
         throw new Error('Therapist already has a session scheduled at this time');
+      }
+
+      // Check for patient conflicts (excluding current session)
+      const hasPatientConflict = await this.checkPatientSchedulingConflict(
+        tenantId,
+        existing.patientId,
+        scheduledDate,
+        startTime,
+        endTime,
+        sessionId
+      );
+
+      if (hasPatientConflict) {
+        throw new Error('Patient already has a session scheduled at this time');
       }
     }
 
@@ -516,9 +543,9 @@ export class SessionsService {
   }
 
   /**
-   * Check for scheduling conflicts
+   * Check for therapist scheduling conflicts
    */
-  private async checkSchedulingConflict(
+  private async checkTherapistSchedulingConflict(
     tenantId: string,
     therapistId: string,
     scheduledDate: Date,
@@ -542,35 +569,111 @@ export class SessionsService {
     const existingSessions = await prisma.session.findMany({
       where,
       select: {
+        id: true,
         startTime: true,
         endTime: true,
       },
     });
 
+    return this.hasTimeOverlap(existingSessions, startTime, endTime);
+  }
+
+  /**
+   * Check for patient scheduling conflicts
+   */
+  private async checkPatientSchedulingConflict(
+    tenantId: string,
+    patientId: string,
+    scheduledDate: Date,
+    startTime: string,
+    endTime: string,
+    excludeSessionId?: string
+  ): Promise<boolean> {
+    const where: any = {
+      tenantId,
+      patientId,
+      scheduledDate,
+      status: {
+        in: ['SCHEDULED', 'COMPLETED'],
+      },
+    };
+
+    if (excludeSessionId) {
+      where.id = { not: excludeSessionId };
+    }
+
+    const existingSessions = await prisma.session.findMany({
+      where,
+      select: {
+        id: true,
+        startTime: true,
+        endTime: true,
+      },
+    });
+
+    return this.hasTimeOverlap(existingSessions, startTime, endTime);
+  }
+
+  /**
+   * Check if requested time overlaps with any existing sessions
+   */
+  private hasTimeOverlap(
+    existingSessions: Array<{ startTime: string; endTime: string }>,
+    requestedStartTime: string,
+    requestedEndTime: string
+  ): boolean {
     // Convert requested time to minutes
-    const [reqStartHour, reqStartMin] = startTime.split(':').map(Number);
-    const [reqEndHour, reqEndMin] = endTime.split(':').map(Number);
+    const [reqStartHour, reqStartMin] = requestedStartTime.split(':').map(Number);
+    const [reqEndHour, reqEndMin] = requestedEndTime.split(':').map(Number);
     const reqStart = reqStartHour * 60 + reqStartMin;
     const reqEnd = reqEndHour * 60 + reqEndMin;
 
-    // Check for overlaps
+    // Check for overlaps with any existing session
     for (const session of existingSessions) {
       const [existStartHour, existStartMin] = session.startTime.split(':').map(Number);
       const [existEndHour, existEndMin] = session.endTime.split(':').map(Number);
       const existStart = existStartHour * 60 + existStartMin;
       const existEnd = existEndHour * 60 + existEndMin;
 
-      // Check for overlap
+      // Check for any overlap (including touching boundaries)
+      // Sessions overlap if:
+      // 1. New session starts during existing session
+      // 2. New session ends during existing session
+      // 3. New session completely contains existing session
+      // 4. Sessions share the same start or end time
       if (
-        (reqStart >= existStart && reqStart < existEnd) ||
-        (reqEnd > existStart && reqEnd <= existEnd) ||
-        (reqStart <= existStart && reqEnd >= existEnd)
+        (reqStart >= existStart && reqStart < existEnd) || // Starts during existing
+        (reqEnd > existStart && reqEnd <= existEnd) || // Ends during existing
+        (reqStart <= existStart && reqEnd >= existEnd) || // Contains existing
+        (reqStart === existStart || reqEnd === existEnd) // Shares boundary
       ) {
         return true;
       }
     }
 
     return false;
+  }
+
+  /**
+   * Legacy method for backward compatibility
+   * @deprecated Use checkTherapistSchedulingConflict instead
+   */
+  private async checkSchedulingConflict(
+    tenantId: string,
+    therapistId: string,
+    scheduledDate: Date,
+    startTime: string,
+    endTime: string,
+    excludeSessionId?: string
+  ): Promise<boolean> {
+    return this.checkTherapistSchedulingConflict(
+      tenantId,
+      therapistId,
+      scheduledDate,
+      startTime,
+      endTime,
+      excludeSessionId
+    );
   }
 
   /**
