@@ -4,6 +4,8 @@ import { toast } from 'sonner';
 
 export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
 
+export type SlotType = 'AVAILABLE' | 'BREAK';
+
 export interface TherapistAvailability {
   id: string;
   therapistId: string;
@@ -11,6 +13,7 @@ export interface TherapistAvailability {
   dayOfWeek: DayOfWeek;
   startTime: string;
   endTime: string;
+  slotType: SlotType;
   active: boolean;
   createdAt: string;
   updatedAt: string;
@@ -25,12 +28,14 @@ export interface CreateAvailabilityInput {
   dayOfWeek: DayOfWeek;
   startTime: string;
   endTime: string;
+  slotType?: SlotType;
 }
 
 export interface UpdateAvailabilityInput {
   dayOfWeek?: DayOfWeek;
   startTime?: string;
   endTime?: string;
+  slotType?: SlotType;
   active?: boolean;
 }
 

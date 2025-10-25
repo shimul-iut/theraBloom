@@ -22,18 +22,18 @@ export interface Session {
   cancelReason?: string;
   createdAt: string;
   updatedAt: string;
-  patient: {
+  Patient: {
     id: string;
     firstName: string;
     lastName: string;
     guardianPhone: string;
   };
-  therapist: {
+  User: {
     id: string;
     firstName: string;
     lastName: string;
   };
-  therapyType: {
+  TherapyType: {
     id: string;
     name: string;
   };

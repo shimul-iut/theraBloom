@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { TherapistScheduleCalendar } from '@/components/therapist/therapist-schedule-calendar';
 import { AvailabilitySlotForm } from '@/components/therapist/availability-slot-form';
 import { SessionQuickForm } from '@/components/therapist/session-quick-form';
+import { UnavailabilityList } from '@/components/therapist/unavailability-list';
 
 export default function TherapistDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -211,6 +212,15 @@ export default function TherapistDetailPage({ params }: { params: { id: string }
         </CardHeader>
       </Card>
 
+      {/* Unavailability Management */}
+      {therapist.sessionDuration ? (
+        <UnavailabilityList
+          therapistId={params.id}
+          therapistName={`${therapist.firstName} ${therapist.lastName}`}
+          sessionDuration={therapist.sessionDuration}
+        />
+      ) : null}
+
       {/* Therapist Schedule Calendar */}
       {therapist.sessionDuration && therapist.specializationId ? (
         <TherapistScheduleCalendar
@@ -234,6 +244,7 @@ export default function TherapistDetailPage({ params }: { params: { id: string }
       {/* Availability Slot Form Dialog */}
       <AvailabilitySlotForm
         therapistId={params.id}
+        therapistSpecializationId={therapist.specializationId || undefined}
         slotId={editingSlotId}
         open={slotFormOpen}
         onOpenChange={setSlotFormOpen}

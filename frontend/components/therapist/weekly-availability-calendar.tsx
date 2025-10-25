@@ -144,19 +144,25 @@ export function WeeklyAvailabilityCalendar({
                 {/* Availability Slots */}
                 {dayAvailability.length > 0 ? (
                   <div className="space-y-2">
-                    <p className="text-xs font-semibold text-muted-foreground">Available</p>
-                    {dayAvailability.map(slot => (
-                      <div
-                        key={slot.id}
-                        className="rounded-md border border-green-200 bg-green-50 p-2 text-xs"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3 text-green-600" />
-                            <span className="font-medium text-green-900">
-                              {slot.startTime} - {slot.endTime}
-                            </span>
-                          </div>
+                    <p className="text-xs font-semibold text-muted-foreground">Schedule</p>
+                    {dayAvailability.map(slot => {
+                      const isBreak = slot.slotType === 'BREAK';
+                      return (
+                        <div
+                          key={slot.id}
+                          className={`rounded-md border p-2 text-xs ${
+                            isBreak
+                              ? 'border-orange-200 bg-orange-50'
+                              : 'border-green-200 bg-green-50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1">
+                              <Clock className={`h-3 w-3 ${isBreak ? 'text-orange-600' : 'text-green-600'}`} />
+                              <span className={`font-medium ${isBreak ? 'text-orange-900' : 'text-green-900'}`}>
+                                {slot.startTime} - {slot.endTime}
+                              </span>
+                            </div>
                           {editable && (
                             <div className="flex gap-1">
                               {onEditSlot && (
@@ -182,9 +188,12 @@ export function WeeklyAvailabilityCalendar({
                             </div>
                           )}
                         </div>
-                        <p className="mt-1 text-xs text-green-700">{slot.therapyType.name}</p>
+                        <p className={`mt-1 text-xs ${isBreak ? 'text-orange-700' : 'text-green-700'}`}>
+                          {isBreak ? '☕ Break Time' : slot.therapyType.name}
+                        </p>
                       </div>
-                    ))}
+                    );
+                    })}
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">No availability</p>
@@ -224,6 +233,10 @@ export function WeeklyAvailabilityCalendar({
           <div className="flex items-center gap-2">
             <div className="h-4 w-4 rounded border border-green-200 bg-green-50" />
             <span className="text-sm">Available Slots</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-4 rounded border border-orange-200 bg-orange-50" />
+            <span className="text-sm">Break Time</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="h-4 w-4 rounded border border-blue-200 bg-blue-50" />

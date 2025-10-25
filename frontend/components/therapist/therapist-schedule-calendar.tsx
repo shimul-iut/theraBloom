@@ -116,10 +116,10 @@ export function TherapistScheduleCalendar({
           isAvailable: !bookedSession,
           session: bookedSession
             ? {
-                id: bookedSession.id,
-                patientName: `${bookedSession.patient.firstName} ${bookedSession.patient.lastName}`,
-                status: bookedSession.status,
-              }
+              id: bookedSession.id,
+              patientName: `${bookedSession.Patient.firstName} ${bookedSession.Patient.lastName}`,
+              status: bookedSession.status,
+            }
             : undefined,
         });
 

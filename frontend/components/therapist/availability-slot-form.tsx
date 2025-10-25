@@ -19,7 +19,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useTherapyTypes } from '@/hooks/use-therapy-types';
 import {
   useCreateAvailability,
   useUpdateAvailability,
@@ -32,6 +31,7 @@ import { useEffect } from 'react';
 
 interface AvailabilitySlotFormProps {
   therapistId: string;
+  therapistSpecializationId?: string;
   slotId?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -49,13 +49,13 @@ const DAYS: { value: DayOfWeek; label: string }[] = [
 
 export function AvailabilitySlotForm({
   therapistId,
+  therapistSpecializationId,
   slotId,
   open,
   onOpenChange,
 }: AvailabilitySlotFormProps) {
   const isEditing = !!slotId;
   const { data: slot } = useAvailabilitySlot(therapistId, slotId || '');
-  const { data: therapyTypes } = useTherapyTypes();
   const createMutation = useCreateAvailability(therapistId);
   const updateMutation = useUpdateAvailability(therapistId, slotId || '');
 
@@ -69,7 +69,14 @@ export function AvailabilitySlotForm({
   } = useForm<CreateAvailabilityInput>();
 
   const selectedDay = watch('dayOfWeek');
-  const selectedTherapyType = watch('therapyTypeId');
+  const selectedSlotType = watch('slotType');
+
+  // Set therapyTypeId from therapist's specialization
+  useEffect(() => {
+    if (therapistSpecializationId && !isEditing) {
+      setValue('therapyTypeId', therapistSpecializationId);
+    }
+  }, [therapistSpecializationId, isEditing, setValue]);
 
   // Load existing slot data when editing
   useEffect(() => {
@@ -78,6 +85,7 @@ export function AvailabilitySlotForm({
       setValue('therapyTypeId', slot.therapyTypeId);
       setValue('startTime', slot.startTime);
       setValue('endTime', slot.endTime);
+      setValue('slotType', slot.slotType || 'AVAILABLE');
     }
   }, [slot, isEditing, setValue]);
 
@@ -95,6 +103,7 @@ export function AvailabilitySlotForm({
           dayOfWeek: data.dayOfWeek,
           startTime: data.startTime,
           endTime: data.endTime,
+          slotType: data.slotType,
         };
         await updateMutation.mutateAsync(updateData);
       } else {
@@ -149,30 +158,38 @@ export function AvailabilitySlotForm({
               )}
             </div>
 
-            {/* Therapy Type */}
+            {/* Slot Type */}
             <div className="space-y-2">
-              <Label htmlFor="therapyTypeId">
-                Therapy Type <span className="text-red-500">*</span>
+              <Label htmlFor="slotType">
+                Slot Type <span className="text-red-500">*</span>
               </Label>
               <Select
-                value={selectedTherapyType}
-                onValueChange={(value) => setValue('therapyTypeId', value)}
-                disabled={isEditing}
+                value={selectedSlotType || 'AVAILABLE'}
+                onValueChange={(value) => setValue('slotType', value as 'AVAILABLE' | 'BREAK')}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select therapy type" />
+                  <SelectValue placeholder="Select slot type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {therapyTypes?.map((type) => (
-                    <SelectItem key={type.id} value={type.id}>
-                      {type.name}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="AVAILABLE">
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 w-3 rounded-full bg-green-500" />
+                      <span>Available for Sessions</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="BREAK">
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 w-3 rounded-full bg-orange-500" />
+                      <span>Break Time (No Sessions)</span>
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
-              {errors.therapyTypeId && (
-                <p className="text-sm text-red-500">Therapy type is required</p>
-              )}
+              <p className="text-xs text-muted-foreground">
+                {selectedSlotType === 'BREAK'
+                  ? 'Break slots prevent session booking during this time'
+                  : 'Available slots can be booked for therapy sessions'}
+              </p>
             </div>
 
             {/* Time Range */}
@@ -208,7 +225,7 @@ export function AvailabilitySlotForm({
 
             {isEditing && (
               <p className="text-sm text-muted-foreground">
-                Note: Day and therapy type cannot be changed. Delete and create a new slot if needed.
+                Note: Day cannot be changed. Delete and create a new slot if needed.
               </p>
             )}
           </div>

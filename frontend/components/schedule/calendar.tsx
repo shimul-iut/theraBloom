@@ -29,7 +29,7 @@ export function Calendar({ sessions, onDateClick, onSessionClick, onAddSession, 
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
 
   const getSessionsForDate = (date: Date) => {
-    return sessions.filter(session => 
+    return sessions.filter(session =>
       isSameDay(new Date(session.scheduledDate), date)
     );
   };
@@ -71,14 +71,14 @@ export function Calendar({ sessions, onDateClick, onSessionClick, onAddSession, 
               {day}
             </div>
           ))}
-          
+
           {/* Calendar Days */}
           {days.map(day => {
             const daySessions = getSessionsForDate(day);
             const isSelected = selectedDate && isSameDay(day, selectedDate);
             const isCurrentMonth = isSameMonth(day, currentMonth);
             const isToday = isSameDay(day, new Date());
-            
+
             return (
               <div
                 key={day.toISOString()}
@@ -111,7 +111,7 @@ export function Calendar({ sessions, onDateClick, onSessionClick, onAddSession, 
                     </Button>
                   )}
                 </div>
-                
+
                 {/* Sessions for this day */}
                 <div className="space-y-1">
                   {daySessions.slice(0, 3).map(session => (
@@ -127,10 +127,10 @@ export function Calendar({ sessions, onDateClick, onSessionClick, onAddSession, 
                       }}
                     >
                       <div className="font-medium truncate">
-                        {session.startTime} - {session.patient.firstName} {session.patient.lastName}
+                        {session.startTime} - {session.Patient.firstName} {session.Patient.lastName}
                       </div>
                       <div className="truncate opacity-75">
-                        {session.therapyType.name}
+                        {session.TherapyType.name}
                       </div>
                     </div>
                   ))}
