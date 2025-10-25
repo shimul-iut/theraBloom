@@ -88,8 +88,22 @@ export class SessionsController {
   async createSession(req: Request, res: Response) {
     try {
       const tenantId = getTenantId(req);
-      const input = createSessionSchema.parse(req.body);
-
+      
+      // Validate input with Zod
+      const validationResult = createSessionSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Validation failed',
+            details: validationResult.error.errors,
+          },
+        });
+      }
+      
+      const input = validationResult.data;
       const session = await sessionsService.createSession(tenantId, input);
 
       logger.info(`Session created: ${session.id} by ${req.user?.phoneNumber}`);
@@ -190,8 +204,22 @@ export class SessionsController {
     try {
       const tenantId = getTenantId(req);
       const sessionId = req.params.id;
-      const input = updateSessionSchema.parse(req.body);
-
+      
+      // Validate input with Zod
+      const validationResult = updateSessionSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Validation failed',
+            details: validationResult.error.errors,
+          },
+        });
+      }
+      
+      const input = validationResult.data;
       const session = await sessionsService.updateSession(tenantId, sessionId, input);
 
       logger.info(`Session updated: ${sessionId} by ${req.user?.phoneNumber}`);
@@ -272,8 +300,22 @@ export class SessionsController {
     try {
       const tenantId = getTenantId(req);
       const sessionId = req.params.id;
-      const input = cancelSessionSchema.parse(req.body);
-
+      
+      // Validate input with Zod
+      const validationResult = cancelSessionSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Validation failed',
+            details: validationResult.error.errors,
+          },
+        });
+      }
+      
+      const input = validationResult.data;
       const session = await sessionsService.cancelSession(tenantId, sessionId, input);
 
       logger.info(`Session cancelled: ${sessionId} by ${req.user?.phoneNumber}`);

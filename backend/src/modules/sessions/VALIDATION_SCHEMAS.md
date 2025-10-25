@@ -295,9 +295,10 @@ When Zod validation fails:
 - Must be ISO 8601 datetime string
 - Examples: "2025-10-21T10:30:00.000Z"
 
-### UUID Format
-- Must be valid UUID v4
-- Example: "123e4567-e89b-12d3-a456-426614174000"
+### CUID Format
+- Must be valid CUID (Collision-resistant Unique Identifier)
+- Format: Starts with 'c' followed by 24+ alphanumeric characters
+- Example: "cmh0ucz720034m2zgeft79njh"
 
 ## Usage in Controllers
 

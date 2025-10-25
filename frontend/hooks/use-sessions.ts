@@ -125,6 +125,8 @@ export function useCreateSession() {
       toast.success('Session created successfully');
     },
     onError: (error: any) => {
+      console.error('Create session error:', error);
+      
       // Check if it's a scheduling conflict
       if (isSchedulingConflict(error)) {
         const conflictDetails = getConflictDetails(error);
@@ -137,7 +139,10 @@ export function useCreateSession() {
         });
       } else {
         // Use the error handler for other errors
-        toast.error(formatErrorForDisplay(error));
+        const message = formatErrorForDisplay(error);
+        toast.error(message, {
+          duration: 4000,
+        });
       }
     },
   });

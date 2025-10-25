@@ -29,7 +29,7 @@ export default function SchedulePage() {
   const monthEnd = endOfMonth(selectedDate);
 
   const { data: therapists } = useTherapists();
-  const { data: sessions, isLoading, error } = useSessions({
+  const { data: sessionsData, isLoading, error } = useSessions({
     startDate: monthStart.toISOString(),
     endDate: monthEnd.toISOString(),
     therapistId: selectedTherapist !== 'all' ? selectedTherapist : undefined,
@@ -39,7 +39,8 @@ export default function SchedulePage() {
   if (isLoading) return <LoadingPage />;
   if (error) return <ErrorMessage message="Failed to load schedule" />;
 
-  const filteredSessions = sessions || [];
+  // Extract sessions array from the response
+  const filteredSessions = sessionsData?.sessions || [];
   const selectedDateSessions = filteredSessions.filter(session => 
     format(new Date(session.scheduledDate), 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd')
   );

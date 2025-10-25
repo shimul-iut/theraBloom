@@ -8,7 +8,7 @@ datasource db {
 }
 
 model Tenant {
-  id                    String                  @id @default(cuid())
+  id                    String                  @id @default(uuid())
   name                  String
   subdomain             String                  @unique
   active                Boolean                 @default(true)
@@ -30,7 +30,7 @@ model Tenant {
 }
 
 model User {
-  id                    String                  @id @default(cuid())
+  id                    String                  @id @default(uuid())
   tenantId              String
   phoneNumber           String
   passwordHash          String
@@ -63,7 +63,7 @@ model User {
 }
 
 model TherapyType {
-  id                    String                  @id @default(cuid())
+  id                    String                  @id @default(uuid())
   tenantId              String
   name                  String
   description           String?
@@ -83,7 +83,7 @@ model TherapyType {
 }
 
 model TherapistAvailability {
-  id            String      @id @default(cuid())
+  id            String      @id @default(uuid())
   tenantId      String
   therapistId   String
   therapyTypeId String
@@ -102,7 +102,7 @@ model TherapistAvailability {
 }
 
 model TherapistPricing {
-  id              String      @id @default(cuid())
+  id              String      @id @default(uuid())
   tenantId        String
   therapistId     String
   therapyTypeId   String
@@ -121,7 +121,7 @@ model TherapistPricing {
 }
 
 model Patient {
-  id                   String           @id @default(cuid())
+  id                   String           @id @default(uuid())
   tenantId             String
   firstName            String
   lastName             String
@@ -148,7 +148,7 @@ model Patient {
 }
 
 model Session {
-  id                 String              @id @default(cuid())
+  id                 String              @id @default(uuid())
   tenantId           String
   patientId          String
   therapistId        String
@@ -178,7 +178,7 @@ model Session {
 }
 
 model SessionPayment {
-  id            String        @id @default(cuid())
+  id            String        @id @default(uuid())
   tenantId      String
   sessionId     String
   amountPaid    Decimal       @db.Decimal(10, 2)
@@ -198,7 +198,7 @@ model SessionPayment {
 }
 
 model Payment {
-  id              String        @id @default(cuid())
+  id              String        @id @default(uuid())
   tenantId        String
   patientId       String
   amount          Decimal       @db.Decimal(10, 2)
@@ -217,7 +217,7 @@ model Payment {
 }
 
 model ProgressReport {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   tenantId    String
   patientId   String
   sessionId   String?
@@ -237,7 +237,7 @@ model ProgressReport {
 }
 
 model RescheduleRequest {
-  id            String           @id @default(cuid())
+  id            String           @id @default(uuid())
   tenantId      String
   sessionId     String
   therapistId   String
@@ -261,7 +261,7 @@ model RescheduleRequest {
 }
 
 model Notification {
-  id            String             @id @default(cuid())
+  id            String             @id @default(uuid())
   tenantId      String
   patientId     String?
   userId        String?
@@ -287,7 +287,7 @@ model Notification {
 }
 
 model Expense {
-  id            String          @id @default(cuid())
+  id            String          @id @default(uuid())
   tenantId      String
   category      ExpenseCategory
   amount        Decimal         @db.Decimal(10, 2)
@@ -305,7 +305,7 @@ model Expense {
 }
 
 model AuditLog {
-  id           String      @id @default(cuid())
+  id           String      @id @default(uuid())
   tenantId     String
   userId       String
   action       AuditAction

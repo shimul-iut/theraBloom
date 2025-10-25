@@ -1,8 +1,11 @@
 import { z } from 'zod';
 import { PaymentMethod } from '@prisma/client';
 
-// UUID validation helper
-const uuidSchema = z.string().uuid('Invalid ID format');
+// CUID validation helper (Prisma uses cuid by default)
+const cuidSchema = z
+  .string()
+  .min(1, 'ID is required')
+  .regex(/^c[a-z0-9]{24,}$/, 'Invalid ID format');
 
 export const recordSessionPaymentSchema = z.object({
   amountPaid: z
@@ -32,12 +35,12 @@ export const recordSessionPaymentSchema = z.object({
 
 // Session payment filters
 export const sessionPaymentFiltersSchema = z.object({
-  sessionId: uuidSchema.describe('Session ID'),
+  sessionId: cuidSchema.describe('Session ID'),
 });
 
 // Payment summary request
 export const paymentSummaryParamSchema = z.object({
-  sessionId: uuidSchema.describe('Session ID'),
+  sessionId: cuidSchema.describe('Session ID'),
 });
 
 // Type exports

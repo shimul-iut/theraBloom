@@ -2,16 +2,21 @@ import { z } from 'zod';
 import { SessionStatus } from '@prisma/client';
 
 // Time format validation (HH:MM)
-const timeSchema = z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:MM)');
+const timeSchema = z
+  .string()
+  .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:MM)');
 
-// UUID validation helper
-const uuidSchema = z.string().uuid('Invalid ID format');
+// CUID validation helper (Prisma uses cuid by default)
+const cuidSchema = z
+  .string()
+  .min(1, 'ID is required')
+  .regex(/^c[a-z0-9]{24,}$/, 'Invalid ID format');
 
 export const createSessionSchema = z
   .object({
-    patientId: uuidSchema.describe('Patient ID'),
-    therapistId: uuidSchema.describe('Therapist ID'),
-    therapyTypeId: uuidSchema.describe('Therapy type ID'),
+    patientId: cuidSchema.describe('Patient ID'),
+    therapistId: cuidSchema.describe('Therapist ID'),
+    therapyTypeId: cuidSchema.describe('Therapy type ID'),
     scheduledDate: z
       .string()
       .datetime('Invalid date format')
@@ -118,9 +123,9 @@ export const cancelSessionSchema = z.object({
 });
 
 export const sessionFiltersSchema = z.object({
-  patientId: z.string().uuid('Invalid patient ID').optional(),
-  therapistId: z.string().uuid('Invalid therapist ID').optional(),
-  therapyTypeId: z.string().uuid('Invalid therapy type ID').optional(),
+  patientId: z.string().optional(),
+  therapistId: z.string().optional(),
+  therapyTypeId: z.string().optional(),
   status: z.nativeEnum(SessionStatus).optional(),
   startDate: z.string().datetime('Invalid start date format').optional(),
   endDate: z.string().datetime('Invalid end date format').optional(),
@@ -141,12 +146,12 @@ export const sessionFiltersSchema = z.object({
 export const calendarFiltersSchema = z.object({
   startDate: z.string().datetime('Invalid start date format'),
   endDate: z.string().datetime('Invalid end date format'),
-  therapistId: z.string().uuid('Invalid therapist ID').optional(),
+  therapistId: z.string().optional(),
 });
 
 // Session ID parameter validation
 export const sessionIdParamSchema = z.object({
-  id: uuidSchema.describe('Session ID'),
+  id: cuidSchema.describe('Session ID'),
 });
 
 // Type exports
