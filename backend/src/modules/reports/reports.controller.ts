@@ -265,7 +265,7 @@ export class ReportsController {
     lines.push('Date,Patient,Therapist,Therapy Type,Status,Cost');
     for (const session of data.sessions) {
       const date = new Date(session.scheduledDate).toISOString().split('T')[0];
-      const patient = `${session.patient.firstName} ${session.patient.lastName}`;
+      const patient = `${session.Patient.firstName} ${session.Patient.lastName}`;
       const therapist = `${session.therapist.firstName} ${session.therapist.lastName}`;
       lines.push(
         `${date},${patient},${therapist},${session.therapyType.name},${session.status},${session.cost}`

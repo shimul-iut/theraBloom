@@ -75,9 +75,9 @@ export class PatientsService {
       include: {
         _count: {
           select: {
-            sessions: true,
-            payments: true,
-            progressReports: true,
+            Session: true,
+            Payment: true,
+            ProgressReport: true,
           },
         },
       },

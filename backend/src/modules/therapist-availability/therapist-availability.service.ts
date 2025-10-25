@@ -126,6 +126,7 @@ export class TherapistAvailabilityService {
         dayOfWeek: input.dayOfWeek,
         startTime: input.startTime,
         endTime: input.endTime,
+        slotType: input.slotType || 'AVAILABLE',
         active: true,
       },
       include: {
@@ -190,6 +191,7 @@ export class TherapistAvailabilityService {
         ...(input.dayOfWeek && { dayOfWeek: input.dayOfWeek }),
         ...(input.startTime && { startTime: input.startTime }),
         ...(input.endTime && { endTime: input.endTime }),
+        ...(input.slotType && { slotType: input.slotType }),
         ...(input.active !== undefined && { active: input.active }),
       },
       include: {

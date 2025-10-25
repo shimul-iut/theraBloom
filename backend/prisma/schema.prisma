@@ -7,95 +7,247 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model AuditLog {
+  id           String      @id
+  tenantId     String
+  userId       String
+  action       AuditAction
+  resourceType String
+  resourceId   String
+  changes      Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime    @default(now())
+  Tenant       Tenant      @relation(fields: [tenantId], references: [id])
+  User         User        @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, resourceType, resourceId])
+  @@index([tenantId, userId])
+}
+
+model Expense {
+  id            String          @id
+  tenantId      String
+  category      ExpenseCategory
+  amount        Decimal         @db.Decimal(10, 2)
+  date          DateTime
+  description   String
+  paymentMethod PaymentMethod
+  createdBy     String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime
+  User          User            @relation(fields: [createdBy], references: [id])
+  Tenant        Tenant          @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, category])
+  @@index([tenantId, date])
+}
+
+model Notification {
+  id            String             @id
+  tenantId      String
+  patientId     String?
+  userId        String?
+  type          NotificationType
+  status        NotificationStatus @default(PENDING)
+  subject       String?
+  message       String
+  recipient     String
+  sentAt        DateTime?
+  failureReason String?
+  retryCount    Int                @default(0)
+  metadata      Json?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime
+  Patient       Patient?           @relation(fields: [patientId], references: [id])
+  Tenant        Tenant             @relation(fields: [tenantId], references: [id])
+  User          User?              @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, patientId])
+  @@index([tenantId, status])
+  @@index([tenantId, type])
+}
+
+model Patient {
+  id                   String           @id
+  tenantId             String
+  firstName            String
+  lastName             String
+  dateOfBirth          DateTime
+  guardianName         String
+  guardianPhone        String
+  guardianEmail        String?
+  address              String?
+  medicalNotes         String?
+  creditBalance        Decimal          @default(0) @db.Decimal(10, 2)
+  totalOutstandingDues Decimal          @default(0) @db.Decimal(10, 2)
+  active               Boolean          @default(true)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime
+  Notification         Notification[]
+  Tenant               Tenant           @relation(fields: [tenantId], references: [id])
+  Payment              Payment[]
+  ProgressReport       ProgressReport[]
+  Session              Session[]
+
+  @@index([tenantId, active])
+  @@index([tenantId, guardianPhone])
+  @@index([tenantId, totalOutstandingDues])
+}
+
+model Payment {
+  id          String        @id
+  tenantId    String
+  patientId   String
+  amount      Decimal       @db.Decimal(10, 2)
+  method      PaymentMethod
+  date        DateTime
+  description String?
+  confirmedBy String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime
+  User        User          @relation(fields: [confirmedBy], references: [id])
+  Patient     Patient       @relation(fields: [patientId], references: [id])
+  Tenant      Tenant        @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, date])
+  @@index([tenantId, patientId])
+}
+
+model ProgressReport {
+  id          String   @id
+  tenantId    String
+  patientId   String
+  sessionId   String?
+  therapistId String
+  reportDate  DateTime
+  notes       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  Patient     Patient  @relation(fields: [patientId], references: [id])
+  Session     Session? @relation(fields: [sessionId], references: [id])
+  Tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  User        User     @relation(fields: [therapistId], references: [id])
+
+  @@index([tenantId, patientId])
+  @@index([tenantId, reportDate])
+  @@index([tenantId, therapistId])
+}
+
+model RescheduleRequest {
+  id                                       String           @id
+  tenantId                                 String
+  sessionId                                String
+  therapistId                              String
+  requestedDate                            DateTime
+  requestedTime                            String
+  reason                                   String
+  status                                   RescheduleStatus @default(PENDING)
+  reviewedBy                               String?
+  reviewedAt                               DateTime?
+  reviewNotes                              String?
+  createdAt                                DateTime         @default(now())
+  updatedAt                                DateTime
+  User_RescheduleRequest_reviewedByToUser  User?            @relation("RescheduleRequest_reviewedByToUser", fields: [reviewedBy], references: [id])
+  Session                                  Session          @relation(fields: [sessionId], references: [id])
+  Tenant                                   Tenant           @relation(fields: [tenantId], references: [id])
+  User_RescheduleRequest_therapistIdToUser User             @relation("RescheduleRequest_therapistIdToUser", fields: [therapistId], references: [id])
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, status])
+  @@index([tenantId, therapistId])
+}
+
+model Session {
+  id                String              @id @default(uuid())
+  tenantId          String
+  patientId         String
+  therapistId       String
+  therapyTypeId     String
+  scheduledDate     DateTime
+  startTime         String
+  endTime           String
+  status            SessionStatus       @default(SCHEDULED)
+  notes             String?
+  cost              Decimal             @db.Decimal(10, 2)
+  paidWithCredit    Boolean             @default(false)
+  cancelReason      String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime             @updatedAt
+  ProgressReport    ProgressReport[]
+  RescheduleRequest RescheduleRequest[]
+  Patient           Patient             @relation(fields: [patientId], references: [id])
+  Tenant            Tenant              @relation(fields: [tenantId], references: [id])
+  User              User                @relation(fields: [therapistId], references: [id])
+  TherapyType       TherapyType         @relation(fields: [therapyTypeId], references: [id])
+  SessionPayment    SessionPayment[]
+
+  @@index([tenantId, patientId])
+  @@index([tenantId, scheduledDate])
+  @@index([tenantId, status])
+  @@index([tenantId, therapistId])
+}
+
+model SessionPayment {
+  id            String        @id
+  tenantId      String
+  sessionId     String
+  amountPaid    Decimal       @db.Decimal(10, 2)
+  amountDue     Decimal       @db.Decimal(10, 2)
+  dueDate       DateTime?
+  paymentMethod PaymentMethod
+  paidAt        DateTime
+  isPaidInFull  Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime
+  Session       Session       @relation(fields: [sessionId], references: [id])
+  Tenant        Tenant        @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, dueDate])
+  @@index([tenantId, isPaidInFull])
+  @@index([tenantId, sessionId])
+}
+
 model Tenant {
-  id                    String                  @id @default(uuid())
-  name                  String
-  subdomain             String                  @unique
-  active                Boolean                 @default(true)
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
-  auditLogs             AuditLog[]
-  expenses              Expense[]
-  notifications         Notification[]
-  patients              Patient[]
-  payments              Payment[]
-  progressReports       ProgressReport[]
-  rescheduleRequests    RescheduleRequest[]
-  sessions              Session[]
-  sessionPayments       SessionPayment[]
-  therapistAvailability TherapistAvailability[]
-  therapistPricing      TherapistPricing[]
-  therapyTypes          TherapyType[]
-  users                 User[]
-}
-
-model User {
-  id                    String                  @id @default(uuid())
-  tenantId              String
-  phoneNumber           String
-  passwordHash          String
-  firstName             String
-  lastName              String
-  role                  UserRole
-  specializationId      String?
-  sessionDuration       Int?
-  sessionCost           Decimal?                @db.Decimal(10, 2)
-  active                Boolean                 @default(true)
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
-  auditLogs             AuditLog[]
-  expensesCreated       Expense[]
-  notifications         Notification[]
-  paymentsConfirmed     Payment[]
-  progressReports       ProgressReport[]        @relation("TherapistReports")
-  reviewedRequests      RescheduleRequest[]     @relation("ReviewerRequests")
-  rescheduleRequests    RescheduleRequest[]     @relation("TherapistRequests")
-  sessionsAsTherapist   Session[]               @relation("TherapistSessions")
-  specialization        TherapyType?            @relation("UserSpecialization", fields: [specializationId], references: [id])
-  therapistAvailability TherapistAvailability[]
-  therapistPricing      TherapistPricing[]      @relation("TherapistPricing")
-  tenant                Tenant                  @relation(fields: [tenantId], references: [id])
-
-  @@unique([tenantId, phoneNumber])
-  @@index([tenantId, role])
-  @@index([tenantId, active])
-  @@index([tenantId, phoneNumber])
-}
-
-model TherapyType {
-  id                    String                  @id @default(uuid())
-  tenantId              String
-  name                  String
-  description           String?
-  defaultDuration       Int
-  defaultCost           Decimal                 @db.Decimal(10, 2)
-  active                Boolean                 @default(true)
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
-  sessions              Session[]
-  therapistAvailability TherapistAvailability[]
-  therapistPricing      TherapistPricing[]
-  specializedUsers      User[]                  @relation("UserSpecialization")
-  tenant                Tenant                  @relation(fields: [tenantId], references: [id])
-
-  @@unique([tenantId, name])
-  @@index([tenantId, active])
+  id                      String                    @id
+  name                    String
+  subdomain               String                    @unique
+  active                  Boolean                   @default(true)
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime
+  AuditLog                AuditLog[]
+  Expense                 Expense[]
+  Notification            Notification[]
+  Patient                 Patient[]
+  Payment                 Payment[]
+  ProgressReport          ProgressReport[]
+  RescheduleRequest       RescheduleRequest[]
+  Session                 Session[]
+  SessionPayment          SessionPayment[]
+  TherapistAvailability   TherapistAvailability[]
+  TherapistPricing        TherapistPricing[]
+  TherapistUnavailability TherapistUnavailability[]
+  TherapyType             TherapyType[]
+  User                    User[]
 }
 
 model TherapistAvailability {
-  id            String      @id @default(uuid())
+  id            String               @id @default(uuid())
   tenantId      String
   therapistId   String
   therapyTypeId String
   dayOfWeek     DayOfWeek
   startTime     String
   endTime       String
-  active        Boolean     @default(true)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  tenant        Tenant      @relation(fields: [tenantId], references: [id])
-  therapist     User        @relation(fields: [therapistId], references: [id])
-  therapyType   TherapyType @relation(fields: [therapyTypeId], references: [id])
+  active        Boolean              @default(true)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  slotType      AvailabilitySlotType @default(AVAILABLE)
+  tenant        Tenant               @relation(fields: [tenantId], references: [id])
+  therapist     User                 @relation(fields: [therapistId], references: [id])
+  therapyType   TherapyType          @relation(fields: [therapyTypeId], references: [id])
 
   @@index([tenantId, therapistId, dayOfWeek])
   @@index([tenantId, therapyTypeId])
@@ -111,223 +263,100 @@ model TherapistPricing {
   active          Boolean     @default(true)
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
-  tenant          Tenant      @relation(fields: [tenantId], references: [id])
-  therapist       User        @relation("TherapistPricing", fields: [therapistId], references: [id])
-  therapyType     TherapyType @relation(fields: [therapyTypeId], references: [id])
+  Tenant          Tenant      @relation(fields: [tenantId], references: [id])
+  User            User        @relation(fields: [therapistId], references: [id])
+  TherapyType     TherapyType @relation(fields: [therapyTypeId], references: [id])
 
   @@unique([tenantId, therapistId, therapyTypeId])
   @@index([tenantId, therapistId])
   @@index([tenantId, therapyTypeId])
 }
 
-model Patient {
-  id                   String           @id @default(uuid())
-  tenantId             String
-  firstName            String
-  lastName             String
-  dateOfBirth          DateTime
-  guardianName         String
-  guardianPhone        String
-  guardianEmail        String?
-  address              String?
-  medicalNotes         String?
-  creditBalance        Decimal          @default(0) @db.Decimal(10, 2)
-  totalOutstandingDues Decimal          @default(0) @db.Decimal(10, 2)
-  active               Boolean          @default(true)
-  createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
-  notifications        Notification[]
-  tenant               Tenant           @relation(fields: [tenantId], references: [id])
-  payments             Payment[]
-  progressReports      ProgressReport[]
-  sessions             Session[]
-
-  @@index([tenantId, active])
-  @@index([tenantId, guardianPhone])
-  @@index([tenantId, totalOutstandingDues])
-}
-
-model Session {
-  id                 String              @id @default(uuid())
-  tenantId           String
-  patientId          String
-  therapistId        String
-  therapyTypeId      String
-  scheduledDate      DateTime
-  startTime          String
-  endTime            String
-  status             SessionStatus       @default(SCHEDULED)
-  notes              String?
-  cost               Decimal             @db.Decimal(10, 2)
-  paidWithCredit     Boolean             @default(false)
-  cancelReason       String?
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  progressReports    ProgressReport[]
-  rescheduleRequests RescheduleRequest[]
-  patient            Patient             @relation(fields: [patientId], references: [id])
-  tenant             Tenant              @relation(fields: [tenantId], references: [id])
-  therapist          User                @relation("TherapistSessions", fields: [therapistId], references: [id])
-  therapyType        TherapyType         @relation(fields: [therapyTypeId], references: [id])
-  sessionPayments    SessionPayment[]
-
-  @@index([tenantId, scheduledDate])
-  @@index([tenantId, patientId])
-  @@index([tenantId, therapistId])
-  @@index([tenantId, status])
-}
-
-model SessionPayment {
-  id            String        @id @default(uuid())
-  tenantId      String
-  sessionId     String
-  amountPaid    Decimal       @db.Decimal(10, 2)
-  amountDue     Decimal       @db.Decimal(10, 2)
-  dueDate       DateTime?
-  paymentMethod PaymentMethod
-  paidAt        DateTime
-  isPaidInFull  Boolean       @default(false)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  session       Session       @relation(fields: [sessionId], references: [id])
-  tenant        Tenant        @relation(fields: [tenantId], references: [id])
-
-  @@index([tenantId, sessionId])
-  @@index([tenantId, isPaidInFull])
-  @@index([tenantId, dueDate])
-}
-
-model Payment {
-  id              String        @id @default(uuid())
-  tenantId        String
-  patientId       String
-  amount          Decimal       @db.Decimal(10, 2)
-  method          PaymentMethod
-  date            DateTime
-  description     String?
-  confirmedBy     String
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  confirmedByUser User          @relation(fields: [confirmedBy], references: [id])
-  patient         Patient       @relation(fields: [patientId], references: [id])
-  tenant          Tenant        @relation(fields: [tenantId], references: [id])
-
-  @@index([tenantId, date])
-  @@index([tenantId, patientId])
-}
-
-model ProgressReport {
-  id          String   @id @default(uuid())
+model TherapistUnavailability {
+  id          String               @id @default(uuid())
   tenantId    String
-  patientId   String
-  sessionId   String?
   therapistId String
-  reportDate  DateTime
-  notes       String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  patient     Patient  @relation(fields: [patientId], references: [id])
-  session     Session? @relation(fields: [sessionId], references: [id])
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
-  therapist   User     @relation("TherapistReports", fields: [therapistId], references: [id])
+  startDate   DateTime
+  endDate     DateTime
+  startTime   String?
+  endTime     String?
+  reason      UnavailabilityReason
+  notes       String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  tenant      Tenant               @relation(fields: [tenantId], references: [id])
+  therapist   User                 @relation(fields: [therapistId], references: [id])
 
-  @@index([tenantId, patientId])
+  @@index([tenantId, startDate, endDate])
   @@index([tenantId, therapistId])
-  @@index([tenantId, reportDate])
 }
 
-model RescheduleRequest {
-  id            String           @id @default(uuid())
-  tenantId      String
-  sessionId     String
-  therapistId   String
-  requestedDate DateTime
-  requestedTime String
-  reason        String
-  status        RescheduleStatus @default(PENDING)
-  reviewedBy    String?
-  reviewedAt    DateTime?
-  reviewNotes   String?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  reviewer      User?            @relation("ReviewerRequests", fields: [reviewedBy], references: [id])
-  session       Session          @relation(fields: [sessionId], references: [id])
-  tenant        Tenant           @relation(fields: [tenantId], references: [id])
-  therapist     User             @relation("TherapistRequests", fields: [therapistId], references: [id])
+model TherapyType {
+  id                    String                  @id
+  tenantId              String
+  name                  String
+  description           String?
+  defaultDuration       Int
+  defaultCost           Decimal                 @db.Decimal(10, 2)
+  active                Boolean                 @default(true)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime
+  Session               Session[]
+  TherapistAvailability TherapistAvailability[]
+  TherapistPricing      TherapistPricing[]
+  Tenant                Tenant                  @relation(fields: [tenantId], references: [id])
+  User                  User[]
 
-  @@index([tenantId, therapistId])
-  @@index([tenantId, status])
-  @@index([tenantId, createdAt])
+  @@unique([tenantId, name])
+  @@index([tenantId, active])
 }
 
-model Notification {
-  id            String             @id @default(uuid())
-  tenantId      String
-  patientId     String?
-  userId        String?
-  type          NotificationType
-  status        NotificationStatus @default(PENDING)
-  subject       String?
-  message       String
-  recipient     String
-  sentAt        DateTime?
-  failureReason String?
-  retryCount    Int                @default(0)
-  metadata      Json?
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-  patient       Patient?           @relation(fields: [patientId], references: [id])
-  tenant        Tenant             @relation(fields: [tenantId], references: [id])
-  user          User?              @relation(fields: [userId], references: [id])
+model User {
+  id                                                    String                    @id @default(uuid())
+  tenantId                                              String
+  passwordHash                                          String
+  firstName                                             String
+  lastName                                              String
+  role                                                  UserRole
+  active                                                Boolean                   @default(true)
+  createdAt                                             DateTime                  @default(now())
+  updatedAt                                             DateTime                  @updatedAt
+  phoneNumber                                           String
+  sessionCost                                           Decimal?                  @db.Decimal(10, 2)
+  sessionDuration                                       Int?
+  specializationId                                      String?
+  AuditLog                                              AuditLog[]
+  Expense                                               Expense[]
+  Notification                                          Notification[]
+  Payment                                               Payment[]
+  ProgressReport                                        ProgressReport[]
+  RescheduleRequest_RescheduleRequest_reviewedByToUser  RescheduleRequest[]       @relation("RescheduleRequest_reviewedByToUser")
+  RescheduleRequest_RescheduleRequest_therapistIdToUser RescheduleRequest[]       @relation("RescheduleRequest_therapistIdToUser")
+  Session                                               Session[]
+  TherapistAvailability                                 TherapistAvailability[]
+  TherapistPricing                                      TherapistPricing[]
+  TherapistUnavailability                               TherapistUnavailability[]
+  TherapyType                                           TherapyType?              @relation(fields: [specializationId], references: [id])
+  Tenant                                                Tenant                    @relation(fields: [tenantId], references: [id])
 
-  @@index([tenantId, status])
-  @@index([tenantId, patientId])
-  @@index([tenantId, createdAt])
-  @@index([tenantId, type])
+  @@unique([tenantId, phoneNumber])
+  @@index([tenantId, active])
+  @@index([tenantId, phoneNumber])
+  @@index([tenantId, role])
 }
 
-model Expense {
-  id            String          @id @default(uuid())
-  tenantId      String
-  category      ExpenseCategory
-  amount        Decimal         @db.Decimal(10, 2)
-  date          DateTime
-  description   String
-  paymentMethod PaymentMethod
-  createdBy     String
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  createdByUser User            @relation(fields: [createdBy], references: [id])
-  tenant        Tenant          @relation(fields: [tenantId], references: [id])
-
-  @@index([tenantId, date])
-  @@index([tenantId, category])
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  CANCEL
+  LOGIN
+  LOGOUT
 }
 
-model AuditLog {
-  id           String      @id @default(uuid())
-  tenantId     String
-  userId       String
-  action       AuditAction
-  resourceType String
-  resourceId   String
-  changes      Json?
-  ipAddress    String?
-  userAgent    String?
-  createdAt    DateTime    @default(now())
-  tenant       Tenant      @relation(fields: [tenantId], references: [id])
-  user         User        @relation(fields: [userId], references: [id])
-
-  @@index([tenantId, createdAt])
-  @@index([tenantId, userId])
-  @@index([tenantId, resourceType, resourceId])
-}
-
-enum UserRole {
-  WORKSPACE_ADMIN
-  OPERATOR
-  THERAPIST
-  ACCOUNTANT
+enum AvailabilitySlotType {
+  AVAILABLE
+  BREAK
 }
 
 enum DayOfWeek {
@@ -340,11 +369,27 @@ enum DayOfWeek {
   SUNDAY
 }
 
-enum SessionStatus {
-  SCHEDULED
-  COMPLETED
-  CANCELLED
-  NO_SHOW
+enum ExpenseCategory {
+  RENT
+  SALARIES
+  UTILITIES
+  MAINTENANCE
+  SUPPLIES
+  MARKETING
+  OTHER
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  RETRYING
+}
+
+enum NotificationType {
+  SMS
+  EMAIL
+  PUSH
 }
 
 enum PaymentMethod {
@@ -361,34 +406,25 @@ enum RescheduleStatus {
   CANCELLED
 }
 
-enum NotificationType {
-  SMS
-  EMAIL
-  PUSH
+enum SessionStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
 }
 
-enum NotificationStatus {
-  PENDING
-  SENT
-  FAILED
-  RETRYING
-}
-
-enum ExpenseCategory {
-  RENT
-  SALARIES
-  UTILITIES
-  MAINTENANCE
-  SUPPLIES
-  MARKETING
+enum UnavailabilityReason {
+  SICK_LEAVE
+  VACATION
+  PERSONAL_LEAVE
+  EMERGENCY
+  TRAINING
   OTHER
 }
 
-enum AuditAction {
-  CREATE
-  UPDATE
-  DELETE
-  CANCEL
-  LOGIN
-  LOGOUT
+enum UserRole {
+  WORKSPACE_ADMIN
+  OPERATOR
+  THERAPIST
+  ACCOUNTANT
 }

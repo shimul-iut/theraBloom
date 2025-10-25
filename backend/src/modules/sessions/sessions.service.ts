@@ -44,21 +44,21 @@ export class SessionsService {
         take: limit,
         orderBy: { scheduledDate: 'desc' },
         include: {
-          patient: {
+          Patient: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
             },
           },
-          therapist: {
+          User: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
             },
           },
-          therapyType: {
+          TherapyType: {
             select: {
               id: true,
               name: true,
@@ -90,7 +90,7 @@ export class SessionsService {
         tenantId,
       },
       include: {
-        patient: {
+        Patient: {
           select: {
             id: true,
             firstName: true,
@@ -99,14 +99,14 @@ export class SessionsService {
             guardianPhone: true,
           },
         },
-        therapist: {
+        User: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        therapyType: {
+        TherapyType: {
           select: {
             id: true,
             name: true,
@@ -114,8 +114,8 @@ export class SessionsService {
             defaultCost: true,
           },
         },
-        sessionPayments: true,
-        progressReports: {
+        SessionPayment: true,
+        ProgressReport: {
           select: {
             id: true,
             reportDate: true,
@@ -236,21 +236,21 @@ export class SessionsService {
         paidWithCredit: input.paidWithCredit,
       },
       include: {
-        patient: {
+        Patient: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        therapist: {
+        User: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        therapyType: {
+        TherapyType: {
           select: {
             id: true,
             name: true,
@@ -353,21 +353,21 @@ export class SessionsService {
         ...(input.notes !== undefined && { notes: input.notes || null }),
       },
       include: {
-        patient: {
+        Patient: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        therapist: {
+        User: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        therapyType: {
+        TherapyType: {
           select: {
             id: true,
             name: true,
@@ -386,7 +386,7 @@ export class SessionsService {
     const session = await prisma.session.findFirst({
       where: { id: sessionId, tenantId },
       include: {
-        patient: true,
+        Patient: true,
       },
     });
 
@@ -410,21 +410,21 @@ export class SessionsService {
         cancelReason: input.cancelReason,
       },
       include: {
-        patient: {
+        Patient: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        therapist: {
+        User: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        therapyType: {
+        TherapyType: {
           select: {
             id: true,
             name: true,
@@ -476,21 +476,21 @@ export class SessionsService {
       where,
       orderBy: { scheduledDate: 'asc' },
       include: {
-        patient: {
+        Patient: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        therapist: {
+        User: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        therapyType: {
+        TherapyType: {
           select: {
             id: true,
             name: true,
@@ -569,7 +569,7 @@ export class SessionsService {
         id: true,
         startTime: true,
         endTime: true,
-        patient: {
+        Patient: {
           select: {
             firstName: true,
             lastName: true,
@@ -585,7 +585,7 @@ export class SessionsService {
       available: hasAvailabilitySchedule && !hasTherapistConflict,
       hasAvailabilitySchedule,
       hasConflict: hasTherapistConflict,
-      therapist: {
+      User: {
         id: therapist.id,
         name: `${therapist.firstName} ${therapist.lastName}`,
       },
@@ -596,7 +596,7 @@ export class SessionsService {
         id: session.id,
         startTime: session.startTime,
         endTime: session.endTime,
-        patientName: `${session.patient.firstName} ${session.patient.lastName}`,
+        patientName: `${session.Patient.firstName} ${session.Patient.lastName}`,
       })),
     };
   }

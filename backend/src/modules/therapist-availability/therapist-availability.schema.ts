@@ -9,6 +9,7 @@ export const createAvailabilitySchema = z.object({
   dayOfWeek: z.nativeEnum(DayOfWeek, { errorMap: () => ({ message: 'Invalid day of week' }) }),
   startTime: timeSchema,
   endTime: timeSchema,
+  slotType: z.enum(['AVAILABLE', 'BREAK']).default('AVAILABLE'),
 }).refine(
   (data) => {
     // Validate that endTime is after startTime
@@ -28,6 +29,7 @@ export const updateAvailabilitySchema = z.object({
   dayOfWeek: z.nativeEnum(DayOfWeek).optional(),
   startTime: timeSchema.optional(),
   endTime: timeSchema.optional(),
+  slotType: z.enum(['AVAILABLE', 'BREAK']).optional(),
   active: z.boolean().optional(),
 }).refine(
   (data) => {

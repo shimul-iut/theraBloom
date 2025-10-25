@@ -26,8 +26,8 @@ export class TherapyTypesService {
         updatedAt: true,
         _count: {
           select: {
-            sessions: true,
-            therapistPricing: true,
+            Session: true,
+            TherapistPricing: true,
           },
         },
       },
@@ -48,9 +48,9 @@ export class TherapyTypesService {
       include: {
         _count: {
           select: {
-            sessions: true,
-            therapistPricing: true,
-            therapistAvailability: true,
+            Session: true,
+            TherapistPricing: true,
+            TherapistAvailability: true,
           },
         },
       },
@@ -173,7 +173,7 @@ export class TherapyTypesService {
       include: {
         _count: {
           select: {
-            sessions: true,
+            Session: true,
           },
         },
       },

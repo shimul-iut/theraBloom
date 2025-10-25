@@ -28,7 +28,7 @@ export class UsersService {
           lastName: true,
           role: true,
           specializationId: true,
-          specialization: {
+          TherapyType: {
             select: {
               id: true,
               name: true,
@@ -71,7 +71,7 @@ export class UsersService {
         lastName: true,
         role: true,
         specializationId: true,
-        specialization: {
+        TherapyType: {
           select: {
             id: true,
             name: true,
@@ -133,7 +133,7 @@ export class UsersService {
         lastName: true,
         role: true,
         specializationId: true,
-        specialization: {
+        TherapyType: {
           select: {
             id: true,
             name: true,
@@ -201,7 +201,7 @@ export class UsersService {
         lastName: true,
         role: true,
         specializationId: true,
-        specialization: {
+        TherapyType: {
           select: {
             id: true,
             name: true,

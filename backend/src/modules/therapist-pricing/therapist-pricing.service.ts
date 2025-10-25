@@ -26,7 +26,7 @@ export class TherapistPricingService {
         active: true,
       },
       include: {
-        therapyType: {
+        TherapyType: {
           select: {
             id: true,
             name: true,
@@ -36,7 +36,7 @@ export class TherapistPricingService {
         },
       },
       orderBy: {
-        therapyType: {
+        TherapyType: {
           name: 'asc',
         },
       },
@@ -76,7 +76,7 @@ export class TherapistPricingService {
         active: true,
       },
       include: {
-        therapyType: {
+        TherapyType: {
           select: {
             id: true,
             name: true,
@@ -129,7 +129,7 @@ export class TherapistPricingService {
         therapistId,
       },
       include: {
-        therapyType: {
+        TherapyType: {
           select: {
             id: true,
             name: true,
@@ -201,7 +201,7 @@ export class TherapistPricingService {
         active: true,
       },
       include: {
-        therapyType: {
+        TherapyType: {
           select: {
             id: true,
             name: true,
@@ -245,7 +245,7 @@ export class TherapistPricingService {
         ...(input.active !== undefined && { active: input.active }),
       },
       include: {
-        therapyType: {
+        TherapyType: {
           select: {
             id: true,
             name: true,

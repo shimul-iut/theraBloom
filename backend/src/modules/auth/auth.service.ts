@@ -18,7 +18,7 @@ export class AuthService {
         active: true,
       },
       include: {
-        tenant: true,
+        Tenant: true,
       },
     });
 
@@ -33,7 +33,7 @@ export class AuthService {
     }
 
     // Check if tenant is active
-    if (!user.tenant.active) {
+    if (!user.Tenant.active) {
       throw new Error('Your organization account is inactive');
     }
 
@@ -59,7 +59,7 @@ export class AuthService {
         lastName: user.lastName,
         role: user.role,
         tenantId: user.tenantId,
-        tenantName: user.tenant.name,
+        tenantName: user.Tenant.name,
       },
       tokens,
     };
@@ -83,10 +83,10 @@ export class AuthService {
     // Get user to ensure they're still active
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
-      include: { tenant: true },
+      include: { Tenant: true },
     });
 
-    if (!user || !user.active || !user.tenant.active) {
+    if (!user || !user.active || !user.Tenant.active) {
       throw new Error('User or tenant is inactive');
     }
 
@@ -111,7 +111,7 @@ export class AuthService {
         lastName: user.lastName,
         role: user.role,
         tenantId: user.tenantId,
-        tenantName: user.tenant.name,
+        tenantName: user.Tenant.name,
       },
       tokens,
     };
@@ -143,7 +143,7 @@ export class AuthService {
         tenantId: true,
         active: true,
         createdAt: true,
-        tenant: {
+        Tenant: {
           select: {
             id: true,
             name: true,
