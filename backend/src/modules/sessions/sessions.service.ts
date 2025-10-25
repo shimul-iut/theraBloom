@@ -503,6 +503,105 @@ export class SessionsService {
   }
 
   /**
+   * Check therapist availability for a specific date and time
+   * Returns detailed availability information including conflicts
+   */
+  async checkAvailability(
+    tenantId: string,
+    therapistId: string,
+    date: string,
+    startTime: string,
+    endTime: string
+  ) {
+    // Get therapist info
+    const therapist = await prisma.user.findFirst({
+      where: {
+        id: therapistId,
+        tenantId,
+        role: 'THERAPIST',
+        active: true,
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        specializationId: true,
+      },
+    });
+
+    if (!therapist) {
+      throw new Error('Therapist not found');
+    }
+
+    const scheduledDate = new Date(date);
+    const dayOfWeek = this.getDayOfWeek(scheduledDate);
+
+    // Check therapist availability schedule
+    const hasAvailabilitySchedule = await this.checkTherapistAvailability(
+      tenantId,
+      therapistId,
+      therapist.specializationId || '',
+      dayOfWeek,
+      startTime,
+      endTime
+    );
+
+    // Check for scheduling conflicts
+    const hasTherapistConflict = await this.checkTherapistSchedulingConflict(
+      tenantId,
+      therapistId,
+      scheduledDate,
+      startTime,
+      endTime
+    );
+
+    // Get existing sessions for this therapist on this date
+    const existingSessions = await prisma.session.findMany({
+      where: {
+        tenantId,
+        therapistId,
+        scheduledDate,
+        status: {
+          in: ['SCHEDULED', 'COMPLETED'],
+        },
+      },
+      select: {
+        id: true,
+        startTime: true,
+        endTime: true,
+        patient: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: {
+        startTime: 'asc',
+      },
+    });
+
+    return {
+      available: hasAvailabilitySchedule && !hasTherapistConflict,
+      hasAvailabilitySchedule,
+      hasConflict: hasTherapistConflict,
+      therapist: {
+        id: therapist.id,
+        name: `${therapist.firstName} ${therapist.lastName}`,
+      },
+      date,
+      startTime,
+      endTime,
+      existingSessions: existingSessions.map((session) => ({
+        id: session.id,
+        startTime: session.startTime,
+        endTime: session.endTime,
+        patientName: `${session.patient.firstName} ${session.patient.lastName}`,
+      })),
+    };
+  }
+
+  /**
    * Check therapist availability for given time slot
    */
   private async checkTherapistAvailability(

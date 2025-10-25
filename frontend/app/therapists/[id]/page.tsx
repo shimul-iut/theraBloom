@@ -1,17 +1,76 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTherapist } from '@/hooks/use-therapists';
+import { useDeleteAvailability } from '@/hooks/use-therapist-availability';
+import { useCancelSession } from '@/hooks/use-sessions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingPage } from '@/components/shared/loading-spinner';
 import { ErrorMessage } from '@/components/shared/error-boundary';
-import { ArrowLeft, Edit, Phone, User } from 'lucide-react';
+import { ArrowLeft, Edit, Phone, User, Calendar as CalendarIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { TherapistScheduleCalendar } from '@/components/therapist/therapist-schedule-calendar';
+import { AvailabilitySlotForm } from '@/components/therapist/availability-slot-form';
+import { SessionQuickForm } from '@/components/therapist/session-quick-form';
 
 export default function TherapistDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { data: therapist, isLoading, error } = useTherapist(params.id);
+  
+  // Availability management
+  const [slotFormOpen, setSlotFormOpen] = useState(false);
+  const [editingSlotId, setEditingSlotId] = useState<string | undefined>();
+  const deleteAvailabilityMutation = useDeleteAvailability(params.id);
+  
+  // Session management
+  const [sessionFormOpen, setSessionFormOpen] = useState(false);
+  const [sessionDate, setSessionDate] = useState<string>();
+  const [sessionStartTime, setSessionStartTime] = useState<string>();
+  const [sessionEndTime, setSessionEndTime] = useState<string>();
+  const [editingSessionId, setEditingSessionId] = useState<string | undefined>();
+  const cancelSessionMutation = useCancelSession(editingSessionId || '');
+
+  // Availability slot handlers
+  const handleAddSlot = () => {
+    setEditingSlotId(undefined);
+    setSlotFormOpen(true);
+  };
+
+  const handleEditSlot = (slotId: string) => {
+    setEditingSlotId(slotId);
+    setSlotFormOpen(true);
+  };
+
+  const handleDeleteSlot = async (slotId: string) => {
+    if (confirm('Are you sure you want to delete this availability slot?')) {
+      await deleteAvailabilityMutation.mutateAsync(slotId);
+    }
+  };
+
+  // Session handlers
+  const handleCreateSession = (date: string, startTime: string, endTime: string) => {
+    setSessionDate(date);
+    setSessionStartTime(startTime);
+    setSessionEndTime(endTime);
+    setEditingSessionId(undefined);
+    setSessionFormOpen(true);
+  };
+
+  const handleEditSession = (sessionId: string) => {
+    setEditingSessionId(sessionId);
+    setSessionDate(undefined);
+    setSessionStartTime(undefined);
+    setSessionEndTime(undefined);
+    setSessionFormOpen(true);
+  };
+
+  const handleDeleteSession = async (sessionId: string) => {
+    if (confirm('Are you sure you want to cancel this session?')) {
+      await cancelSessionMutation.mutateAsync({ cancelReason: 'Cancelled by admin' });
+    }
+  };
 
   if (isLoading) return <LoadingPage />;
 
@@ -135,6 +194,66 @@ export default function TherapistDetailPage({ params }: { params: { id: string }
           </Button>
         </CardContent>
       </Card>
+
+      {/* Availability Management Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <CalendarIcon className="h-5 w-5" />
+                Availability Setup
+              </CardTitle>
+              <CardDescription>Manage weekly availability slots</CardDescription>
+            </div>
+            <Button onClick={handleAddSlot}>Add Availability Slot</Button>
+          </div>
+        </CardHeader>
+      </Card>
+
+      {/* Therapist Schedule Calendar */}
+      {therapist.sessionDuration && therapist.specializationId ? (
+        <TherapistScheduleCalendar
+          therapistId={params.id}
+          therapistName={`${therapist.firstName} ${therapist.lastName}`}
+          sessionDuration={therapist.sessionDuration}
+          onCreateSession={handleCreateSession}
+          onEditSession={handleEditSession}
+          onDeleteSession={handleDeleteSession}
+        />
+      ) : (
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground text-center">
+              Please set up therapist specialization and session duration to view the schedule calendar.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Availability Slot Form Dialog */}
+      <AvailabilitySlotForm
+        therapistId={params.id}
+        slotId={editingSlotId}
+        open={slotFormOpen}
+        onOpenChange={setSlotFormOpen}
+      />
+
+      {/* Session Quick Form Dialog */}
+      {therapist.specializationId && therapist.sessionCost && (
+        <SessionQuickForm
+          therapistId={params.id}
+          therapistName={`${therapist.firstName} ${therapist.lastName}`}
+          therapyTypeId={therapist.specializationId}
+          sessionCost={Number(therapist.sessionCost)}
+          date={sessionDate}
+          startTime={sessionStartTime}
+          endTime={sessionEndTime}
+          sessionId={editingSessionId}
+          open={sessionFormOpen}
+          onOpenChange={setSessionFormOpen}
+        />
+      )}
     </div>
   );
 }

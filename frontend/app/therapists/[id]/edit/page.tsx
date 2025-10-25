@@ -33,8 +33,8 @@ export default function EditTherapistPage({ params }: { params: { id: string } }
       firstName: data.firstName,
       lastName: data.lastName,
       specializationId: data.specializationId,
-      sessionDuration: data.sessionDuration,
-      sessionCost: data.sessionCost,
+      sessionDuration: parseInt(data.sessionDuration.toString(), 10),
+      sessionCost: parseFloat(parseFloat(data.sessionCost.toString()).toFixed(2)),
     });
     router.push('/therapists');
   };

@@ -2,9 +2,9 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# Install OpenSSL and other dependencies for Prisma
-RUN apt-get update -y && \
-    apt-get install -y openssl ca-certificates && \
+# Install OpenSSL and other dependencies for Prisma with retry logic
+RUN apt-get update -y || apt-get update -y && \
+    apt-get install -y --no-install-recommends openssl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy package files

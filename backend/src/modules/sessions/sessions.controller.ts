@@ -401,6 +401,49 @@ export class SessionsController {
       });
     }
   }
+
+  /**
+   * GET /api/v1/sessions/check-availability
+   * Check therapist availability for a specific date and time
+   */
+  async checkAvailability(req: Request, res: Response) {
+    try {
+      const tenantId = getTenantId(req);
+      const { therapistId, date, startTime, endTime } = req.query;
+
+      if (!therapistId || !date || !startTime || !endTime) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'MISSING_PARAMETERS',
+            message: 'therapistId, date, startTime, and endTime are required',
+          },
+        });
+      }
+
+      const availability = await sessionsService.checkAvailability(
+        tenantId,
+        therapistId as string,
+        date as string,
+        startTime as string,
+        endTime as string
+      );
+
+      return res.json({
+        success: true,
+        data: availability,
+      });
+    } catch (error) {
+      logger.error('Check availability error:', error);
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'CHECK_AVAILABILITY_FAILED',
+          message: 'Failed to check availability',
+        },
+      });
+    }
+  }
 }
 
 export const sessionsController = new SessionsController();

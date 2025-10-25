@@ -11,7 +11,11 @@ export default function NewTherapistPage() {
   const createTherapist = useCreateTherapist();
 
   const handleSubmit = async (data: CreateTherapistInput) => {
-    await createTherapist.mutateAsync(data);
+    await createTherapist.mutateAsync({
+      ...data,
+      sessionDuration: parseInt(data.sessionDuration.toString(), 10),
+      sessionCost: parseFloat(parseFloat(data.sessionCost.toString()).toFixed(2)),
+    });
     router.push('/therapists');
   };
 

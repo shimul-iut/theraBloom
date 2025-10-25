@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { usePatients } from '@/hooks/use-patients';
 import { useTherapists } from '@/hooks/use-therapists';
 import { useTherapyTypes } from '@/hooks/use-therapy-types';
+import { AvailabilityChecker } from './availability-checker';
 
 import { CreateSessionInput } from '@/hooks/use-sessions';
 
@@ -32,6 +33,8 @@ export function SessionForm({ defaultValues, onSubmit, isLoading }: SessionFormP
   const selectedTherapist = watch('therapistId');
   const selectedTherapyType = watch('therapyTypeId');
   const startTime = watch('startTime');
+  const endTime = watch('endTime');
+  const scheduledDate = watch('scheduledDate');
 
   // Auto-select therapy type and calculate end time when therapist is selected
   useEffect(() => {
@@ -245,6 +248,16 @@ export function SessionForm({ defaultValues, onSubmit, isLoading }: SessionFormP
           </div>
         </CardContent>
       </Card>
+
+      {/* Availability Checker */}
+      {selectedTherapist && scheduledDate && startTime && endTime && (
+        <AvailabilityChecker
+          therapistId={selectedTherapist}
+          date={scheduledDate}
+          startTime={startTime}
+          endTime={endTime}
+        />
+      )}
 
       <div className="flex justify-end gap-4">
         <Button type="submit" disabled={isLoading}>

@@ -16,6 +16,12 @@ router.use(authenticate);
 router.get('/calendar', (req, res) => sessionsController.getCalendarSessions(req, res));
 
 /**
+ * GET /api/v1/sessions/check-availability
+ * Check therapist availability for a specific date and time
+ */
+router.get('/check-availability', (req, res) => sessionsController.checkAvailability(req, res));
+
+/**
  * GET /api/v1/sessions
  * List sessions with filters
  */

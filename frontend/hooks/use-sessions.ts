@@ -198,3 +198,44 @@ export function useCancelSession(id: string) {
     },
   });
 }
+
+export interface AvailabilityCheck {
+  available: boolean;
+  hasAvailabilitySchedule: boolean;
+  hasConflict: boolean;
+  therapist: {
+    id: string;
+    name: string;
+  };
+  date: string;
+  startTime: string;
+  endTime: string;
+  existingSessions: Array<{
+    id: string;
+    startTime: string;
+    endTime: string;
+    patientName: string;
+  }>;
+}
+
+export function useCheckAvailability(
+  therapistId?: string,
+  date?: string,
+  startTime?: string,
+  endTime?: string
+) {
+  return useQuery({
+    queryKey: ['availability', therapistId, date, startTime, endTime],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (therapistId) params.append('therapistId', therapistId);
+      if (date) params.append('date', date);
+      if (startTime) params.append('startTime', startTime);
+      if (endTime) params.append('endTime', endTime);
+
+      const response = await api.get(`/sessions/check-availability?${params.toString()}`);
+      return response.data.data as AvailabilityCheck;
+    },
+    enabled: !!(therapistId && date && startTime && endTime),
+  });
+}

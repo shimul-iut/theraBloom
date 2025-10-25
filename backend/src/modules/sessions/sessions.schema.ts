@@ -6,17 +6,17 @@ const timeSchema = z
   .string()
   .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:MM)');
 
-// CUID validation helper (Prisma uses cuid by default)
-const cuidSchema = z
+// UUID validation helper (migrated from CUID to UUID)
+const uuidSchema = z
   .string()
   .min(1, 'ID is required')
-  .regex(/^c[a-z0-9]{24,}$/, 'Invalid ID format');
+  .uuid('Invalid ID format');
 
 export const createSessionSchema = z
   .object({
-    patientId: cuidSchema.describe('Patient ID'),
-    therapistId: cuidSchema.describe('Therapist ID'),
-    therapyTypeId: cuidSchema.describe('Therapy type ID'),
+    patientId: uuidSchema.describe('Patient ID'),
+    therapistId: uuidSchema.describe('Therapist ID'),
+    therapyTypeId: uuidSchema.describe('Therapy type ID'),
     scheduledDate: z
       .string()
       .datetime('Invalid date format')
@@ -151,7 +151,7 @@ export const calendarFiltersSchema = z.object({
 
 // Session ID parameter validation
 export const sessionIdParamSchema = z.object({
-  id: cuidSchema.describe('Session ID'),
+  id: uuidSchema.describe('Session ID'),
 });
 
 // Type exports

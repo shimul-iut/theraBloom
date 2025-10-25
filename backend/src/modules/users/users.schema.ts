@@ -10,6 +10,10 @@ export const createUserSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   role: z.nativeEnum(UserRole, { errorMap: () => ({ message: 'Invalid role' }) }),
+  // Therapist-specific fields (optional for non-therapist roles)
+  specializationId: z.string().uuid('Invalid specialization ID').optional().nullable(),
+  sessionDuration: z.number().int().positive('Session duration must be positive').optional().nullable(),
+  sessionCost: z.number().positive('Session cost must be positive').optional().nullable(),
 });
 
 export const updateUserSchema = z.object({
@@ -18,6 +22,10 @@ export const updateUserSchema = z.object({
   lastName: z.string().min(1, 'Last name is required').optional(),
   role: z.nativeEnum(UserRole).optional(),
   active: z.boolean().optional(),
+  // Therapist-specific fields
+  specializationId: z.string().uuid('Invalid specialization ID').optional().nullable(),
+  sessionDuration: z.number().int().positive('Session duration must be positive').optional().nullable(),
+  sessionCost: z.number().positive('Session cost must be positive').optional().nullable(),
 });
 
 export const changePasswordSchema = z.object({

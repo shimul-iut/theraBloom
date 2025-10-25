@@ -121,6 +121,10 @@ export class UsersService {
         lastName: input.lastName,
         role: input.role,
         active: true,
+        // Therapist-specific fields
+        ...(input.specializationId && { specializationId: input.specializationId }),
+        ...(input.sessionDuration && { sessionDuration: input.sessionDuration }),
+        ...(input.sessionCost && { sessionCost: input.sessionCost }),
       },
       select: {
         id: true,
@@ -128,6 +132,15 @@ export class UsersService {
         firstName: true,
         lastName: true,
         role: true,
+        specializationId: true,
+        specialization: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        sessionDuration: true,
+        sessionCost: true,
         active: true,
         createdAt: true,
       },
@@ -176,6 +189,10 @@ export class UsersService {
         ...(input.lastName && { lastName: input.lastName }),
         ...(input.role && { role: input.role }),
         ...(input.active !== undefined && { active: input.active }),
+        // Therapist-specific fields
+        ...(input.specializationId !== undefined && { specializationId: input.specializationId }),
+        ...(input.sessionDuration !== undefined && { sessionDuration: input.sessionDuration }),
+        ...(input.sessionCost !== undefined && { sessionCost: input.sessionCost }),
       },
       select: {
         id: true,
@@ -183,6 +200,15 @@ export class UsersService {
         firstName: true,
         lastName: true,
         role: true,
+        specializationId: true,
+        specialization: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        sessionDuration: true,
+        sessionCost: true,
         active: true,
         updatedAt: true,
       },
