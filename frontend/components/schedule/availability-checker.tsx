@@ -59,7 +59,7 @@ export function AvailabilityChecker({
           Availability Check
         </CardTitle>
         <CardDescription>
-          {availability.therapist.name} on {new Date(date).toLocaleDateString()} at {startTime} - {endTime}
+          {availability.User.name} on {new Date(date).toLocaleDateString()} at {startTime} - {endTime}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

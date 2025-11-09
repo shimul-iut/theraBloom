@@ -203,7 +203,7 @@ export interface AvailabilityCheck {
   available: boolean;
   hasAvailabilitySchedule: boolean;
   hasConflict: boolean;
-  therapist: {
+  User: {
     id: string;
     name: string;
   };
