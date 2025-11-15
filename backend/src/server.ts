@@ -96,6 +96,7 @@ import therapistUnavailabilityRoutes from './modules/therapist-unavailability/th
 import therapistPricingRoutes from './modules/therapist-pricing/therapist-pricing.routes';
 import sessionsRoutes from './modules/sessions/sessions.routes';
 import paymentsRoutes from './modules/payments/payments.routes';
+import invoicesRoutes from './modules/invoices/invoices.routes';
 import progressReportsRoutes from './modules/progress-reports/progress-reports.routes';
 import rescheduleRequestsRoutes from './modules/reschedule-requests/reschedule-requests.routes';
 import expensesRoutes from './modules/expenses/expenses.routes';
@@ -112,6 +113,7 @@ app.use('/api/v1/therapists', therapistUnavailabilityRoutes);
 app.use('/api/v1/therapists', therapistPricingRoutes);
 app.use('/api/v1/sessions', sessionsRoutes);
 app.use('/api/v1/payments', paymentsRoutes);
+app.use('/api/v1/invoices', invoicesRoutes);
 app.use('/api/v1/progress-reports', progressReportsRoutes);
 app.use('/api/v1/reschedule-requests', rescheduleRequestsRoutes);
 app.use('/api/v1/expenses', expensesRoutes);

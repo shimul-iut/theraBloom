@@ -91,6 +91,7 @@ model Patient {
   Payment              Payment[]
   ProgressReport       ProgressReport[]
   Session              Session[]
+  Invoice              Invoice[]
 
   @@index([tenantId, active])
   @@index([tenantId, guardianPhone])
@@ -172,17 +173,16 @@ model Session {
   status            SessionStatus       @default(SCHEDULED)
   notes             String?
   cost              Decimal             @db.Decimal(10, 2)
-  paidWithCredit    Boolean             @default(false)
   cancelReason      String?
   createdAt         DateTime            @default(now())
-  updatedAt         DateTime             @updatedAt
+  updatedAt         DateTime            @updatedAt
   ProgressReport    ProgressReport[]
   RescheduleRequest RescheduleRequest[]
   Patient           Patient             @relation(fields: [patientId], references: [id])
   Tenant            Tenant              @relation(fields: [tenantId], references: [id])
   User              User                @relation(fields: [therapistId], references: [id])
   TherapyType       TherapyType         @relation(fields: [therapyTypeId], references: [id])
-  SessionPayment    SessionPayment[]
+  InvoiceLineItem   InvoiceLineItem?
 
   @@index([tenantId, patientId])
   @@index([tenantId, scheduledDate])
@@ -190,24 +190,45 @@ model Session {
   @@index([tenantId, therapistId])
 }
 
-model SessionPayment {
-  id            String        @id
-  tenantId      String
-  sessionId     String
-  amountPaid    Decimal       @db.Decimal(10, 2)
-  amountDue     Decimal       @db.Decimal(10, 2)
-  dueDate       DateTime?
-  paymentMethod PaymentMethod
-  paidAt        DateTime
-  isPaidInFull  Boolean       @default(false)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime
-  Session       Session       @relation(fields: [sessionId], references: [id])
-  Tenant        Tenant        @relation(fields: [tenantId], references: [id])
+model Invoice {
+  id                String        @id @default(uuid())
+  tenantId          String
+  patientId         String
+  invoiceNumber     String        @unique
+  invoiceDate       DateTime      @default(now())
+  totalAmount       Decimal       @db.Decimal(10, 2)
+  paidAmount        Decimal       @db.Decimal(10, 2)
+  creditUsed        Decimal       @default(0) @db.Decimal(10, 2)
+  outstandingAmount Decimal       @db.Decimal(10, 2)
+  paymentMethod     PaymentMethod
+  notes             String?
+  status            InvoiceStatus @default(ACTIVE)
+  confirmedBy       String
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  Patient           Patient       @relation(fields: [patientId], references: [id])
+  Tenant            Tenant        @relation(fields: [tenantId], references: [id])
+  User              User          @relation("InvoiceConfirmedBy", fields: [confirmedBy], references: [id])
+  InvoiceLineItem   InvoiceLineItem[]
 
-  @@index([tenantId, dueDate])
-  @@index([tenantId, isPaidInFull])
-  @@index([tenantId, sessionId])
+  @@index([tenantId, patientId])
+  @@index([tenantId, invoiceDate])
+  @@index([invoiceNumber])
+  @@index([tenantId, status])
+}
+
+model InvoiceLineItem {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  sessionId   String   @unique
+  description String
+  amount      Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+  Invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  Session     Session  @relation(fields: [sessionId], references: [id])
+
+  @@index([invoiceId])
+  @@index([sessionId])
 }
 
 model Tenant {
@@ -225,7 +246,7 @@ model Tenant {
   ProgressReport          ProgressReport[]
   RescheduleRequest       RescheduleRequest[]
   Session                 Session[]
-  SessionPayment          SessionPayment[]
+  Invoice                 Invoice[]
   TherapistAvailability   TherapistAvailability[]
   TherapistPricing        TherapistPricing[]
   TherapistUnavailability TherapistUnavailability[]
@@ -336,6 +357,7 @@ model User {
   TherapistAvailability                                 TherapistAvailability[]
   TherapistPricing                                      TherapistPricing[]
   TherapistUnavailability                               TherapistUnavailability[]
+  Invoice                                               Invoice[]                 @relation("InvoiceConfirmedBy")
   TherapyType                                           TherapyType?              @relation(fields: [specializationId], references: [id])
   Tenant                                                Tenant                    @relation(fields: [tenantId], references: [id])
 
@@ -406,6 +428,11 @@ enum RescheduleStatus {
   CANCELLED
 }
 
+enum PaymentStatus {
+  UNPAID
+  PAID
+}
+
 enum SessionStatus {
   SCHEDULED
   COMPLETED
@@ -427,4 +454,9 @@ enum UserRole {
   OPERATOR
   THERAPIST
   ACCOUNTANT
+}
+
+enum InvoiceStatus {
+  ACTIVE
+  VOID
 }

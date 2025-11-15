@@ -114,7 +114,17 @@ export class SessionsService {
             defaultCost: true,
           },
         },
-        SessionPayment: true,
+        InvoiceLineItem: {
+          include: {
+            Invoice: {
+              select: {
+                id: true,
+                invoiceNumber: true,
+                invoiceDate: true,
+              },
+            },
+          },
+        },
         ProgressReport: {
           select: {
             id: true,
@@ -215,11 +225,6 @@ export class SessionsService {
 
     const sessionCost = Number(pricingResult.pricing.sessionCost);
 
-    // Check if patient has sufficient credit if paying with credit
-    if (input.paidWithCredit && Number(patient.creditBalance) < sessionCost) {
-      throw new Error('Insufficient credit balance');
-    }
-
     // Create session
     const session = await prisma.session.create({
       data: {
@@ -233,7 +238,6 @@ export class SessionsService {
         status: 'SCHEDULED',
         notes: input.notes || null,
         cost: sessionCost,
-        paidWithCredit: input.paidWithCredit,
       },
       include: {
         Patient: {
@@ -258,18 +262,6 @@ export class SessionsService {
         },
       },
     });
-
-    // If paid with credit, deduct from patient's credit balance
-    if (input.paidWithCredit) {
-      await prisma.patient.update({
-        where: { id: input.patientId },
-        data: {
-          creditBalance: {
-            decrement: sessionCost,
-          },
-        },
-      });
-    }
 
     return session;
   }
@@ -380,13 +372,19 @@ export class SessionsService {
   }
 
   /**
-   * Cancel session with credit refund
+   * Cancel session with invoice-aware financial adjustments
+   * Handles credit refunds and outstanding dues adjustments
    */
   async cancelSession(tenantId: string, sessionId: string, input: CancelSessionInput) {
     const session = await prisma.session.findFirst({
       where: { id: sessionId, tenantId },
       include: {
         Patient: true,
+        InvoiceLineItem: {
+          include: {
+            Invoice: true,
+          },
+        },
       },
     });
 
@@ -402,50 +400,130 @@ export class SessionsService {
       throw new Error('Cannot cancel completed session');
     }
 
-    // Update session status
-    const updatedSession = await prisma.session.update({
-      where: { id: sessionId },
-      data: {
-        status: 'CANCELLED',
-        cancelReason: input.cancelReason,
-      },
-      include: {
-        Patient: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        User: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        TherapyType: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
+    const sessionCost = Number(session.cost);
 
-    // Refund credit if session was paid with credit
-    if (session.paidWithCredit) {
-      await prisma.patient.update({
-        where: { id: session.patientId },
+    // Use transaction to ensure data consistency
+    const result = await prisma.$transaction(async (tx) => {
+      // Update session status
+      const updatedSession = await tx.session.update({
+        where: { id: sessionId },
         data: {
-          creditBalance: {
-            increment: Number(session.cost),
+          status: 'CANCELLED',
+          cancelReason: input.cancelReason,
+        },
+        include: {
+          Patient: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              creditBalance: true,
+              totalOutstandingDues: true,
+            },
+          },
+          User: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          TherapyType: {
+            select: {
+              id: true,
+              name: true,
+            },
           },
         },
       });
-    }
 
-    return updatedSession;
+      let creditAdded = 0;
+      let duesReduced = 0;
+      let adjustmentType: 'none' | 'credit' | 'dues' = 'none';
+
+      // Check if session is in an invoice
+      if (session.InvoiceLineItem) {
+        const invoice = session.InvoiceLineItem.Invoice;
+        const outstandingAmount = Number(invoice.outstandingAmount);
+
+        if (outstandingAmount === 0) {
+          // Invoice is fully paid - add session cost to credit
+          await tx.patient.update({
+            where: { id: session.patientId },
+            data: {
+              creditBalance: {
+                increment: sessionCost,
+              },
+            },
+          });
+          creditAdded = sessionCost;
+          adjustmentType = 'credit';
+        } else {
+          // Invoice has outstanding - reduce outstanding dues
+          const newOutstanding = Math.max(0, outstandingAmount - sessionCost);
+          const duesReduction = outstandingAmount - newOutstanding;
+
+          await tx.invoice.update({
+            where: { id: invoice.id },
+            data: {
+              outstandingAmount: newOutstanding,
+              totalAmount: {
+                decrement: sessionCost,
+              },
+            },
+          });
+
+          await tx.patient.update({
+            where: { id: session.patientId },
+            data: {
+              totalOutstandingDues: {
+                decrement: duesReduction,
+              },
+            },
+          });
+
+          duesReduced = duesReduction;
+          adjustmentType = 'dues';
+        }
+
+        // Remove invoice line item
+        await tx.invoiceLineItem.delete({
+          where: { id: session.InvoiceLineItem.id },
+        });
+
+        // Check if invoice is now empty
+        const remainingLineItems = await tx.invoiceLineItem.count({
+          where: { invoiceId: invoice.id },
+        });
+
+        if (remainingLineItems === 0) {
+          // Mark invoice as void when all line items are removed
+          await tx.invoice.update({
+            where: { id: invoice.id },
+            data: {
+              status: 'VOID',
+              totalAmount: 0,
+              outstandingAmount: 0,
+            },
+          });
+        }
+      }
+      // If session not invoiced, no financial adjustment needed
+
+      return {
+        session: updatedSession,
+        creditAdded,
+        duesReduced,
+        adjustmentType,
+      };
+    });
+
+    return {
+      ...result.session,
+      creditAdded: result.creditAdded,
+      duesReduced: result.duesReduced,
+      adjustmentType: result.adjustmentType,
+    };
   }
 
   /**

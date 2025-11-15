@@ -92,7 +92,7 @@ export class TherapistPricingService {
       };
     }
 
-    // Fallback to therapy type defaults
+    // Fallback to therapist's session cost if set, otherwise therapy type defaults
     const therapyType = await prisma.therapyType.findFirst({
       where: {
         id: therapyTypeId,
@@ -105,6 +105,10 @@ export class TherapistPricingService {
       throw new Error('Therapy type not found');
     }
 
+    // Use therapist's session cost if available, otherwise use therapy type default
+    const sessionCost = therapist.sessionCost || therapyType.defaultCost;
+    const sessionDuration = therapist.sessionDuration || therapyType.defaultDuration;
+
     return {
       source: 'default',
       pricing: {
@@ -112,8 +116,8 @@ export class TherapistPricingService {
           id: therapyType.id,
           name: therapyType.name,
         },
-        sessionDuration: therapyType.defaultDuration,
-        sessionCost: therapyType.defaultCost,
+        sessionDuration: sessionDuration,
+        sessionCost: sessionCost,
       },
     };
   }

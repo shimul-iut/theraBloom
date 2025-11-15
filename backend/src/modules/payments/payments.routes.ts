@@ -9,6 +9,18 @@ const router = Router();
 router.use(authenticate);
 
 /**
+ * GET /api/v1/payments/unpaid
+ * Get all unpaid sessions grouped by patient
+ */
+router.get('/unpaid', (req, res) => paymentsController.getUnpaidSessions(req, res));
+
+/**
+ * GET /api/v1/payments/history/:patientId
+ * Get payment history for a patient
+ */
+router.get('/history/:patientId', (req, res) => paymentsController.getPaymentHistory(req, res));
+
+/**
  * GET /api/v1/payments
  * List payments with filters
  */
@@ -19,6 +31,14 @@ router.get('/', (req, res) => paymentsController.getPayments(req, res));
  * Get payment by ID
  */
 router.get('/:id', (req, res) => paymentsController.getPaymentById(req, res));
+
+/**
+ * POST /api/v1/payments/confirm
+ * Confirm payment for sessions (admin/operator)
+ */
+router.post('/confirm', requireAdminOrOperator, (req, res) =>
+  paymentsController.confirmPayment(req, res)
+);
 
 /**
  * POST /api/v1/payments

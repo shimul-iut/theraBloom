@@ -11,6 +11,17 @@ export const recordPaymentSchema = z.object({
   description: z.string().optional(),
 });
 
+export const confirmPaymentSchema = z.object({
+  patientId: z.string().min(1, 'Patient is required'),
+  sessionIds: z.array(z.string()).min(1, 'At least one session is required'),
+  paidAmount: z.number().positive('Paid amount must be positive'),
+  paymentMethod: z.nativeEnum(PaymentMethod, {
+    errorMap: () => ({ message: 'Invalid payment method' }),
+  }),
+  useCreditAmount: z.number().min(0).optional(),
+  notes: z.string().optional(),
+});
+
 export const paymentFiltersSchema = z.object({
   patientId: z.string().optional(),
   method: z.nativeEnum(PaymentMethod).optional(),
@@ -21,4 +32,5 @@ export const paymentFiltersSchema = z.object({
 });
 
 export type RecordPaymentInput = z.infer<typeof recordPaymentSchema>;
+export type ConfirmPaymentInput = z.infer<typeof confirmPaymentSchema>;
 export type PaymentFiltersInput = z.infer<typeof paymentFiltersSchema>;

@@ -1,6 +1,8 @@
 import prisma from '../../config/database';
 import { RecordPaymentInput } from './payments.schema';
 import { PaymentMethod } from '@prisma/client';
+import { randomUUID } from 'crypto';
+import { invoicesService } from '../invoices/invoices.service';
 
 export class PaymentsService {
   /**
@@ -39,14 +41,14 @@ export class PaymentsService {
         take: limit,
         orderBy: { date: 'desc' },
         include: {
-          patient: {
+          Patient: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
             },
           },
-          confirmedByUser: {
+          User: {
             select: {
               id: true,
               firstName: true,
@@ -79,7 +81,7 @@ export class PaymentsService {
         tenantId,
       },
       include: {
-        patient: {
+        Patient: {
           select: {
             id: true,
             firstName: true,
@@ -87,7 +89,7 @@ export class PaymentsService {
             creditBalance: true,
           },
         },
-        confirmedByUser: {
+        User: {
           select: {
             id: true,
             firstName: true,
@@ -137,6 +139,7 @@ export class PaymentsService {
     // Create payment record
     const payment = await prisma.payment.create({
       data: {
+        id: randomUUID(),
         tenantId,
         patientId: input.patientId,
         amount: input.amount,
@@ -144,16 +147,17 @@ export class PaymentsService {
         date: input.date ? new Date(input.date) : new Date(),
         description: input.description || null,
         confirmedBy,
+        updatedAt: new Date(),
       },
       include: {
-        patient: {
+        Patient: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        confirmedByUser: {
+        User: {
           select: {
             id: true,
             firstName: true,
@@ -216,32 +220,42 @@ export class PaymentsService {
       },
     });
 
-    // Get credit usage (sessions paid with credit)
-    const creditUsage = await prisma.session.findMany({
+    // Get credit usage from invoices
+    const invoicesWithCredit = await prisma.invoice.findMany({
       where: {
         patientId,
         tenantId,
-        paidWithCredit: true,
-        status: {
-          not: 'CANCELLED', // Exclude cancelled sessions (credit was refunded)
+        creditUsed: {
+          gt: 0,
         },
+        status: 'ACTIVE', // Exclude voided invoices
       },
-      orderBy: { scheduledDate: 'desc' },
+      orderBy: { invoiceDate: 'desc' },
       select: {
         id: true,
-        scheduledDate: true,
-        cost: true,
-        status: true,
-        therapyType: {
-          select: {
-            name: true,
+        invoiceNumber: true,
+        invoiceDate: true,
+        creditUsed: true,
+        InvoiceLineItem: {
+          include: {
+            Session: {
+              select: {
+                id: true,
+                scheduledDate: true,
+                TherapyType: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
     });
 
     const totalPurchased = creditPurchases.reduce((sum, p) => sum + Number(p.amount), 0);
-    const totalUsed = creditUsage.reduce((sum, s) => sum + Number(s.cost), 0);
+    const totalUsed = invoicesWithCredit.reduce((sum, inv) => sum + Number(inv.creditUsed), 0);
 
     return {
       patient: {
@@ -255,27 +269,119 @@ export class PaymentsService {
         totalUsed,
         currentBalance: Number(patient.creditBalance),
         purchases: creditPurchases,
-        usage: creditUsage,
+        usage: invoicesWithCredit.map((inv) => ({
+          invoiceId: inv.id,
+          invoiceNumber: inv.invoiceNumber,
+          invoiceDate: inv.invoiceDate,
+          creditUsed: Number(inv.creditUsed),
+          sessions: inv.InvoiceLineItem.map((item) => ({
+            id: item.Session.id,
+            scheduledDate: item.Session.scheduledDate,
+            therapyType: item.Session.TherapyType.name,
+          })),
+        })),
       },
     };
   }
 
   /**
+   * Get all uninvoiced sessions grouped by patient
+   * DEPRECATED: Use invoicesService.getUninvoicedSessions instead
+   * This method is kept for backward compatibility
+   */
+  async getUnpaidSessions(tenantId: string): Promise<{
+    patients: Array<{
+      patient: {
+        id: string;
+        firstName: string;
+        lastName: string;
+        creditBalance: number;
+        totalOutstandingDues: number;
+      };
+      sessions: Array<{
+        id: string;
+        scheduledDate: Date;
+        startTime: string;
+        endTime: string;
+        cost: number;
+        status: string;
+        therapyType: {
+          id: string;
+          name: string;
+        };
+        therapist: {
+          id: string;
+          name: string;
+        };
+      }>;
+      totalCost: number;
+      netPayable: number;
+    }>;
+    summary: {
+      totalPatients: number;
+      totalSessions: number;
+      totalCost: number;
+    };
+  }> {
+    // Delegate to invoices service
+    return invoicesService.getUninvoicedSessions(tenantId);
+  }
+
+  /**
    * Get payment transaction history for a patient
+   * Returns invoices and general payments (credit purchases)
    */
   async getPatientPaymentHistory(tenantId: string, patientId: string, page = 1, limit = 20) {
     const skip = (page - 1) * limit;
 
-    // Verify patient exists
+    // Verify patient exists and get current balances
     const patient = await prisma.patient.findFirst({
       where: { id: patientId, tenantId },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        creditBalance: true,
+        totalOutstandingDues: true,
+      },
     });
 
     if (!patient) {
       throw new Error('Patient not found');
     }
 
-    const [payments, total] = await Promise.all([
+    // Get invoices (replaces session payments)
+    const [invoices, invoicesTotal] = await Promise.all([
+      prisma.invoice.findMany({
+        where: {
+          patientId,
+          tenantId,
+          status: 'ACTIVE',
+        },
+        skip,
+        take: limit,
+        orderBy: { invoiceDate: 'desc' },
+        include: {
+          InvoiceLineItem: {
+            select: {
+              id: true,
+              description: true,
+              amount: true,
+            },
+          },
+        },
+      }),
+      prisma.invoice.count({
+        where: {
+          patientId,
+          tenantId,
+          status: 'ACTIVE',
+        },
+      }),
+    ]);
+
+    // Get general payments (credit purchases, etc.)
+    const [generalPayments, generalPaymentsTotal] = await Promise.all([
       prisma.payment.findMany({
         where: {
           patientId,
@@ -285,7 +391,7 @@ export class PaymentsService {
         take: limit,
         orderBy: { date: 'desc' },
         include: {
-          confirmedByUser: {
+          User: {
             select: {
               id: true,
               firstName: true,
@@ -297,16 +403,109 @@ export class PaymentsService {
       prisma.payment.count({ where: { patientId, tenantId } }),
     ]);
 
+    // Calculate summary totals
+    const allInvoices = await prisma.invoice.findMany({
+      where: {
+        patientId,
+        tenantId,
+        status: 'ACTIVE',
+      },
+      select: {
+        paidAmount: true,
+        creditUsed: true,
+      },
+    });
+
+    const allGeneralPayments = await prisma.payment.findMany({
+      where: {
+        patientId,
+        tenantId,
+      },
+      select: {
+        amount: true,
+        method: true,
+      },
+    });
+
+    const totalPaidForSessions = allInvoices.reduce(
+      (sum, inv) => sum + Number(inv.paidAmount),
+      0
+    );
+
+    const totalCreditUsed = allInvoices.reduce(
+      (sum, inv) => sum + Number(inv.creditUsed),
+      0
+    );
+
+    const totalCreditPurchases = allGeneralPayments
+      .filter((p) => p.method === 'PREPAID_CREDIT')
+      .reduce((sum, p) => sum + Number(p.amount), 0);
+
+    const totalGeneralPayments = allGeneralPayments
+      .filter((p) => p.method !== 'PREPAID_CREDIT')
+      .reduce((sum, p) => sum + Number(p.amount), 0);
+
+    // Format invoices for response
+    const formattedInvoices = invoices.map((inv) => ({
+      id: inv.id,
+      invoiceNumber: inv.invoiceNumber,
+      invoiceDate: inv.invoiceDate,
+      totalAmount: Number(inv.totalAmount),
+      paidAmount: Number(inv.paidAmount),
+      creditUsed: Number(inv.creditUsed),
+      outstandingAmount: Number(inv.outstandingAmount),
+      paymentMethod: inv.paymentMethod,
+      lineItemCount: inv.InvoiceLineItem.length,
+    }));
+
+    // Format general payments for response
+    const formattedGeneralPayments = generalPayments.map((p) => ({
+      id: p.id,
+      amount: Number(p.amount),
+      method: p.method,
+      date: p.date,
+      description: p.description,
+      confirmedBy: {
+        id: p.User.id,
+        name: `${p.User.firstName} ${p.User.lastName}`,
+      },
+    }));
+
     return {
-      payments,
+      patient: {
+        id: patient.id,
+        name: `${patient.firstName} ${patient.lastName}`,
+        creditBalance: Number(patient.creditBalance),
+        totalOutstandingDues: Number(patient.totalOutstandingDues),
+      },
+      invoices: formattedInvoices,
+      generalPayments: formattedGeneralPayments,
+      summary: {
+        totalPaidForSessions,
+        totalCreditUsed,
+        totalCreditPurchases,
+        totalGeneralPayments,
+        currentCreditBalance: Number(patient.creditBalance),
+        currentOutstandingDues: Number(patient.totalOutstandingDues),
+      },
       pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
+        invoices: {
+          page,
+          limit,
+          total: invoicesTotal,
+          totalPages: Math.ceil(invoicesTotal / limit),
+        },
+        generalPayments: {
+          page,
+          limit,
+          total: generalPaymentsTotal,
+          totalPages: Math.ceil(generalPaymentsTotal / limit),
+        },
       },
     };
   }
+
+
 }
 
 export const paymentsService = new PaymentsService();

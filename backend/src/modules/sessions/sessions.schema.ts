@@ -28,10 +28,6 @@ export const createSessionSchema = z
       .max(1000, 'Notes cannot exceed 1000 characters')
       .optional()
       .describe('Optional session notes'),
-    paidWithCredit: z
-      .boolean()
-      .default(false)
-      .describe('Whether session is paid with patient credit'),
   })
   .refine(
     (data) => {
