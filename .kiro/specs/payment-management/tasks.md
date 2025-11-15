@@ -66,7 +66,11 @@ This implementation uses an invoice-based payment model where payments are track
     - _Requirements: 7.1, 7.2, 7.3_
   
 
-  - [ ] 3.4 Implement get patient invoices logic
+  - [x] 3.4 Implement get patient invoices logic
+
+
+
+
     - Fetch all invoices for patient
     - Support pagination
     - Support date range filtering
@@ -262,8 +266,15 @@ This implementation uses an invoice-based payment model where payments are track
     - Handle errors gracefully
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7_
 
-- [ ] 9. Build invoice view component
-  - [ ] 9.1 Create invoice display layout
+- [x] 9. Build invoice view component
+
+
+
+
+
+  - [x] 9.1 Create invoice display layout
+
+
     - Invoice header (number, date, patient info)
     - Line items table (session details and amounts)
     - Financial summary section
@@ -271,44 +282,66 @@ This implementation uses an invoice-based payment model where payments are track
     - Payment method and notes
     - _Requirements: 7.2, 7.3, 7.4, 7.5, 7.6_
   
-  - [ ] 9.2 Add print functionality
+  - [x] 9.2 Add print functionality
+
+
     - Print button
     - Print-optimized CSS
     - Format for PDF conversion
     - Include therapy center branding
     - _Requirements: 7.7, 7.8, 7.9_
   
-  - [ ] 9.3 Create invoice page route
+  - [x] 9.3 Create invoice page route
+
+
     - Create /payments/invoices/[invoiceId] page
     - Fetch and display invoice
     - Handle loading and error states
     - _Requirements: 7.1_
 
-- [ ] 10. Build invoice history view
-  - [ ] 10.1 Create invoice list component
+- [x] 10. Build invoice history view
+
+
+
+
+
+  - [x] 10.1 Create invoice list component
+
+
     - Display invoices in table format
     - Show invoice number, date, total, paid, outstanding
     - Make rows clickable to view invoice
     - Show summary totals at top
     - _Requirements: 8.1, 8.2, 8.3_
   
-  - [ ] 10.2 Add pagination
+  - [x] 10.2 Add pagination
+
+
     - Implement pagination controls
     - Show page numbers and navigation
     - Default to 20 invoices per page
     - _Requirements: 8.7_
   
-  - [ ] 10.3 Add date range filter
+  - [x] 10.3 Add date range filter
+
+
     - Date range picker
     - Filter invoices by date
     - _Requirements: 8.6_
   
-  - [ ] 10.4 Integrate into patient details page
+  - [x] 10.4 Integrate into patient details page
+
+
     - Add invoice history section to patient page
     - Link to full invoice history view
     - _Requirements: 8.1_
 
-- [ ] 11. Update patient details page
+- [x] 11. Update patient details page
+
+
+
+
+
   - Display credit balance prominently
   - Display outstanding dues prominently
   - Add link to invoice history
@@ -317,6 +350,14 @@ This implementation uses an invoice-based payment model where payments are track
   - _Requirements: 2.2, 2.3, 2.4, 8.1_
 
 - [ ] 12. Update session list components
+
+
+
+
+
+
+
+
   - Remove payment status badges from sessions
   - Add indicator if session is invoiced (with invoice number link)
   - Show "Not Invoiced" badge for uninvoiced sessions

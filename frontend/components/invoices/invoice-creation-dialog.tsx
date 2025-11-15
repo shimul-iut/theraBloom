@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { UninvoicedPatient, useCreateInvoice } from '@/hooks/use-invoices';
 import {
@@ -23,7 +24,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertCircle, CreditCard, FileText, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -40,7 +40,8 @@ export function InvoiceCreationDialog({
   onOpenChange,
   patientData,
 }: InvoiceCreationDialogProps) {
-  const { patient, sessions, totalCost } = patientData;
+  const router = useRouter();
+  const { patient, sessions } = patientData;
   const createInvoice = useCreateInvoice();
 
   const [selectedSessions, setSelectedSessions] = useState<string[]>(
@@ -113,7 +114,7 @@ export function InvoiceCreationDialog({
       return;
     }
 
-    await createInvoice.mutateAsync({
+    const result = await createInvoice.mutateAsync({
       patientId: patient.id,
       sessionIds: selectedSessions,
       paidAmount: calculations.paid,
@@ -129,6 +130,9 @@ export function InvoiceCreationDialog({
     setPaymentMethod('CASH');
     setCreditUsed('0');
     setNotes('');
+
+    // Navigate to the created invoice
+    router.push(`/payments/invoices/${result.invoice.id}`);
   };
 
   const toggleSession = (sessionId: string) => {

@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { LoadingPage } from '@/components/shared/loading-spinner';
 import { ErrorMessage } from '@/components/shared/error-boundary';
-import { ArrowLeft, Calendar, Clock, User, FileText } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, User, FileText, Receipt } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function PatientSessionsPage({ params }: { params: { id: string } }) {
@@ -149,6 +149,23 @@ export default function PatientSessionsPage({ params }: { params: { id: string }
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{session.TherapyType.name}</p>
                       {getStatusBadge(session.status)}
+                      {session.InvoiceLineItem ? (
+                        <Badge 
+                          variant="outline" 
+                          className="cursor-pointer hover:bg-accent"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/payments/invoices/${session.InvoiceLineItem!.invoiceId}`);
+                          }}
+                        >
+                          <Receipt className="h-3 w-3 mr-1" />
+                          {session.InvoiceLineItem.Invoice.invoiceNumber}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-muted-foreground">
+                          Not Invoiced
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
@@ -167,9 +184,6 @@ export default function PatientSessionsPage({ params }: { params: { id: string }
                   </div>
                   <div className="text-right">
                     <p className="font-semibold">৳{Number(session.cost).toFixed(2)}</p>
-                    {session.paidWithCredit && (
-                      <p className="text-xs text-muted-foreground">Paid with credit</p>
-                    )}
                   </div>
                 </div>
               ))}
@@ -204,6 +218,23 @@ export default function PatientSessionsPage({ params }: { params: { id: string }
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{session.TherapyType.name}</p>
                         {getStatusBadge(session.status)}
+                        {session.InvoiceLineItem ? (
+                          <Badge 
+                            variant="outline" 
+                            className="cursor-pointer hover:bg-accent"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/payments/invoices/${session.InvoiceLineItem!.invoiceId}`);
+                            }}
+                          >
+                            <Receipt className="h-3 w-3 mr-1" />
+                            {session.InvoiceLineItem.Invoice.invoiceNumber}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-muted-foreground">
+                            Not Invoiced
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
@@ -228,9 +259,6 @@ export default function PatientSessionsPage({ params }: { params: { id: string }
                     </div>
                     <div className="text-right">
                       <p className="font-semibold">৳{Number(session.cost).toFixed(2)}</p>
-                      {session.paidWithCredit && (
-                        <p className="text-xs text-muted-foreground">Paid with credit</p>
-                      )}
                     </div>
                   </div>
                 ))}

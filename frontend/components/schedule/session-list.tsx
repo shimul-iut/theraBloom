@@ -1,11 +1,12 @@
 'use client';
 
 import { format } from 'date-fns';
+import { useRouter } from 'next/navigation';
 import { Session } from '@/hooks/use-sessions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, User, Phone, Edit, Trash2 } from 'lucide-react';
+import { Clock, User, Phone, Edit, Trash2, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SessionListProps {
@@ -23,6 +24,8 @@ export function SessionList({
   onCancelSession, 
   onAddSession 
 }: SessionListProps) {
+  const router = useRouter();
+  
   const getStatusVariant = (status: string) => {
     switch (status) {
       case 'SCHEDULED':
@@ -84,6 +87,23 @@ export function SessionList({
                         <Badge variant={getStatusVariant(session.status)}>
                           {session.status}
                         </Badge>
+                        {session.InvoiceLineItem ? (
+                          <Badge 
+                            variant="outline" 
+                            className="cursor-pointer hover:bg-accent"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/payments/invoices/${session.InvoiceLineItem!.invoiceId}`);
+                            }}
+                          >
+                            <FileText className="h-3 w-3 mr-1" />
+                            {session.InvoiceLineItem.Invoice.invoiceNumber}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-muted-foreground">
+                            Not Invoiced
+                          </Badge>
+                        )}
                         <span className="text-sm text-muted-foreground">
                           {session.startTime} - {session.endTime}
                         </span>
@@ -93,23 +113,23 @@ export function SessionList({
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">
-                            {session.patient.firstName} {session.patient.lastName}
+                            {session.Patient.firstName} {session.Patient.lastName}
                           </span>
                         </div>
                         
                         <div className="flex items-center gap-2">
                           <Phone className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm text-muted-foreground">
-                            {session.patient.guardianPhone}
+                            {session.Patient.guardianPhone}
                           </span>
                         </div>
                         
                         <div className="text-sm">
-                          <span className="font-medium">Therapist:</span> {session.therapist.firstName} {session.therapist.lastName}
+                          <span className="font-medium">Therapist:</span> {session.User.firstName} {session.User.lastName}
                         </div>
                         
                         <div className="text-sm">
-                          <span className="font-medium">Type:</span> {session.therapyType.name}
+                          <span className="font-medium">Type:</span> {session.TherapyType.name}
                         </div>
                         
                         <div className="text-sm">

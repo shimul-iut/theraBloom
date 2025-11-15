@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -11,9 +12,11 @@ async function main() {
     where: { subdomain: 'demo' },
     update: {},
     create: {
+      id: randomUUID(),
       name: 'Demo Therapy Center',
       subdomain: 'demo',
       active: true,
+      updatedAt: new Date(),
     },
   });
 
@@ -56,12 +59,14 @@ async function main() {
     where: { tenantId_name: { tenantId: tenant.id, name: 'Physical Therapy' } },
     update: {},
     create: {
+      id: randomUUID(),
       tenantId: tenant.id,
       name: 'Physical Therapy',
       description: 'Physical therapy for motor skills development',
       defaultDuration: 60,
       defaultCost: 50.0,
       active: true,
+      updatedAt: new Date(),
     },
   });
 
@@ -69,12 +74,14 @@ async function main() {
     where: { tenantId_name: { tenantId: tenant.id, name: 'Occupational Therapy' } },
     update: {},
     create: {
+      id: randomUUID(),
       tenantId: tenant.id,
       name: 'Occupational Therapy',
       description: 'Occupational therapy for daily living skills',
       defaultDuration: 45,
       defaultCost: 45.0,
       active: true,
+      updatedAt: new Date(),
     },
   });
 
@@ -82,12 +89,14 @@ async function main() {
     where: { tenantId_name: { tenantId: tenant.id, name: 'Speech Therapy' } },
     update: {},
     create: {
+      id: randomUUID(),
       tenantId: tenant.id,
       name: 'Speech Therapy',
       description: 'Speech and language therapy',
       defaultDuration: 30,
       defaultCost: 40.0,
       active: true,
+      updatedAt: new Date(),
     },
   });
 
@@ -188,9 +197,46 @@ async function main() {
 
   console.log('✅ Created therapist availability schedules for all therapists');
 
+  // Create therapist pricing for each therapist and therapy type
+  await prisma.therapistPricing.create({
+    data: {
+      tenantId: tenant.id,
+      therapistId: therapist1.id,
+      therapyTypeId: physicalTherapy.id,
+      sessionDuration: 60,
+      sessionCost: 60.0,
+      active: true,
+    },
+  });
+
+  await prisma.therapistPricing.create({
+    data: {
+      tenantId: tenant.id,
+      therapistId: therapist2.id,
+      therapyTypeId: speechTherapy.id,
+      sessionDuration: 30,
+      sessionCost: 45.0,
+      active: true,
+    },
+  });
+
+  await prisma.therapistPricing.create({
+    data: {
+      tenantId: tenant.id,
+      therapistId: therapist3.id,
+      therapyTypeId: occupationalTherapy.id,
+      sessionDuration: 45,
+      sessionCost: 48.0,
+      active: true,
+    },
+  });
+
+  console.log('✅ Created therapist pricing records');
+
   // Create sample patients
   const patient1 = await prisma.patient.create({
     data: {
+      id: randomUUID(),
       tenantId: tenant.id,
       firstName: 'Emma',
       lastName: 'Johnson',
@@ -202,11 +248,13 @@ async function main() {
       medicalNotes: 'Diagnosed with autism spectrum disorder',
       creditBalance: 200.0,
       active: true,
+      updatedAt: new Date(),
     },
   });
 
   const patient2 = await prisma.patient.create({
     data: {
+      id: randomUUID(),
       tenantId: tenant.id,
       firstName: 'Liam',
       lastName: 'Smith',
@@ -218,6 +266,7 @@ async function main() {
       medicalNotes: 'Speech delay',
       creditBalance: 150.0,
       active: true,
+      updatedAt: new Date(),
     },
   });
 
@@ -228,7 +277,7 @@ async function main() {
   today.setHours(0, 0, 0, 0);
 
   // Today's sessions
-  await prisma.session.create({
+  const session1 = await prisma.session.create({
     data: {
       tenantId: tenant.id,
       patientId: patient1.id,
@@ -239,11 +288,10 @@ async function main() {
       endTime: '11:00',
       status: 'SCHEDULED',
       cost: 50.0,
-      paidWithCredit: true,
     },
   });
 
-  await prisma.session.create({
+  const session2 = await prisma.session.create({
     data: {
       tenantId: tenant.id,
       patientId: patient2.id,
@@ -254,7 +302,6 @@ async function main() {
       endTime: '14:30',
       status: 'SCHEDULED',
       cost: 40.0,
-      paidWithCredit: false,
     },
   });
 
@@ -262,7 +309,7 @@ async function main() {
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  await prisma.session.create({
+  const session3 = await prisma.session.create({
     data: {
       tenantId: tenant.id,
       patientId: patient1.id,
@@ -273,11 +320,10 @@ async function main() {
       endTime: '09:45',
       status: 'SCHEDULED',
       cost: 45.0,
-      paidWithCredit: true,
     },
   });
 
-  await prisma.session.create({
+  const session4 = await prisma.session.create({
     data: {
       tenantId: tenant.id,
       patientId: patient2.id,
@@ -288,7 +334,6 @@ async function main() {
       endTime: '12:00',
       status: 'SCHEDULED',
       cost: 50.0,
-      paidWithCredit: false,
     },
   });
 
@@ -296,7 +341,7 @@ async function main() {
   const dayAfter = new Date(today);
   dayAfter.setDate(dayAfter.getDate() + 2);
 
-  await prisma.session.create({
+  const session5 = await prisma.session.create({
     data: {
       tenantId: tenant.id,
       patientId: patient1.id,
@@ -307,7 +352,6 @@ async function main() {
       endTime: '10:30',
       status: 'SCHEDULED',
       cost: 40.0,
-      paidWithCredit: true,
     },
   });
 
@@ -315,7 +359,7 @@ async function main() {
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
-  await prisma.session.create({
+  const session6 = await prisma.session.create({
     data: {
       tenantId: tenant.id,
       patientId: patient2.id,
@@ -326,12 +370,11 @@ async function main() {
       endTime: '16:00',
       status: 'COMPLETED',
       cost: 50.0,
-      paidWithCredit: false,
     },
   });
 
   // Cancelled session
-  await prisma.session.create({
+  const session7 = await prisma.session.create({
     data: {
       tenantId: tenant.id,
       patientId: patient1.id,
@@ -342,11 +385,38 @@ async function main() {
       endTime: '16:45',
       status: 'CANCELLED',
       cost: 45.0,
-      paidWithCredit: false,
     },
   });
 
   console.log('✅ Created 7 sample sessions (today, tomorrow, past, cancelled)');
+
+  // Create sample invoices for completed session
+  const invoice1 = await prisma.invoice.create({
+    data: {
+      tenantId: tenant.id,
+      patientId: patient2.id,
+      invoiceNumber: `INV-${Date.now()}-001`,
+      invoiceDate: yesterday,
+      totalAmount: 50.0,
+      paidAmount: 50.0,
+      creditUsed: 0,
+      outstandingAmount: 0,
+      paymentMethod: 'CASH',
+      status: 'ACTIVE',
+      confirmedBy: admin.id,
+    },
+  });
+
+  await prisma.invoiceLineItem.create({
+    data: {
+      invoiceId: invoice1.id,
+      sessionId: session6.id,
+      description: 'Physical Therapy Session',
+      amount: 50.0,
+    },
+  });
+
+  console.log('✅ Created sample invoice for completed session');
 
   console.log('🎉 Database seed completed successfully!');
   console.log('\n📝 Demo Credentials (Phone Number):');

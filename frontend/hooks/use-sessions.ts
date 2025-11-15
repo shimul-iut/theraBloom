@@ -37,6 +37,14 @@ export interface Session {
     id: string;
     name: string;
   };
+  InvoiceLineItem?: {
+    id: string;
+    invoiceId: string;
+    Invoice: {
+      id: string;
+      invoiceNumber: string;
+    };
+  };
 }
 
 export interface CreateSessionInput {
