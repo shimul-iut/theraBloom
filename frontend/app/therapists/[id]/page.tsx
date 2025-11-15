@@ -4,8 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTherapist } from '@/hooks/use-therapists';
 import { useDeleteAvailability } from '@/hooks/use-therapist-availability';
-import { useCancelSession } from '@/hooks/use-sessions';
 import { Button } from '@/components/ui/button';
+import api from '@/lib/api';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingPage } from '@/components/shared/loading-spinner';
 import { ErrorMessage } from '@/components/shared/error-boundary';
@@ -31,7 +32,6 @@ export default function TherapistDetailPage({ params }: { params: { id: string }
   const [sessionStartTime, setSessionStartTime] = useState<string>();
   const [sessionEndTime, setSessionEndTime] = useState<string>();
   const [editingSessionId, setEditingSessionId] = useState<string | undefined>();
-  const cancelSessionMutation = useCancelSession(editingSessionId || '');
 
   // Availability slot handlers
   const handleAddSlot = () => {
@@ -69,7 +69,15 @@ export default function TherapistDetailPage({ params }: { params: { id: string }
 
   const handleDeleteSession = async (sessionId: string) => {
     if (confirm('Are you sure you want to cancel this session?')) {
-      await cancelSessionMutation.mutateAsync({ cancelReason: 'Cancelled by admin' });
+      try {
+        await api.post(`/sessions/${sessionId}/cancel`, { cancelReason: 'Cancelled by admin' });
+        toast.success('Session cancelled successfully');
+        // Refresh the page data
+        window.location.reload();
+      } catch (error: any) {
+        const message = error.response?.data?.error?.message || 'Failed to cancel session';
+        toast.error(message);
+      }
     }
   };
 
@@ -161,7 +169,7 @@ export default function TherapistDetailPage({ params }: { params: { id: string }
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">${Number(therapist.sessionCost).toFixed(2)}</p>
+                    <p className="font-semibold">৳{Number(therapist.sessionCost).toFixed(2)}</p>
                     <p className="text-sm text-muted-foreground">per session</p>
                   </div>
                 </div>

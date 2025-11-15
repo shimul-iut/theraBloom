@@ -82,9 +82,11 @@ export function TherapistScheduleCalendar({
     const slots: TimeSlot[] = [];
     const dayStr = format(dayDate, 'yyyy-MM-dd');
 
-    // Get sessions for this specific day
+    // Get sessions for this specific day (exclude cancelled sessions)
     const daySessions = sessions.filter(
-      (session) => format(new Date(session.scheduledDate), 'yyyy-MM-dd') === dayStr
+      (session) => 
+        format(new Date(session.scheduledDate), 'yyyy-MM-dd') === dayStr &&
+        session.status !== 'CANCELLED'
     );
 
     // For each availability window, generate time slots

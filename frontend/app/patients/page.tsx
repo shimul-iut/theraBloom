@@ -42,7 +42,7 @@ export default function PatientsPage() {
       header: 'Credit Balance',
       cell: ({ row }) => {
         const balance = Number(row.original.creditBalance) || 0;
-        return `$${balance.toFixed(2)}`;
+        return `৳${balance.toFixed(2)}`;
       },
     },
     {
@@ -52,7 +52,7 @@ export default function PatientsPage() {
         const amount = Number(row.original.totalOutstandingDues) || 0;
         return (
           <span className={amount > 0 ? 'text-red-600 font-medium' : ''}>
-            ${amount.toFixed(2)}
+            ৳{amount.toFixed(2)}
           </span>
         );
       },

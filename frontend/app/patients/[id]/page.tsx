@@ -115,13 +115,13 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
             <div>
               <p className="text-sm font-medium text-muted-foreground">Credit Balance</p>
               <p className="text-2xl font-bold text-green-600">
-                ${creditBalance.toFixed(2)}
+                ৳{creditBalance.toFixed(2)}
               </p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Outstanding Dues</p>
               <p className={`text-2xl font-bold ${outstandingDues > 0 ? 'text-red-600' : 'text-gray-600'}`}>
-                ${outstandingDues.toFixed(2)}
+                ৳{outstandingDues.toFixed(2)}
               </p>
             </div>
           </CardContent>

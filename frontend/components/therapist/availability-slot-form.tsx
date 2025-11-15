@@ -19,6 +19,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   useCreateAvailability,
   useUpdateAvailability,
@@ -66,7 +69,12 @@ export function AvailabilitySlotForm({
     watch,
     reset,
     formState: { errors },
-  } = useForm<CreateAvailabilityInput>();
+  } = useForm<CreateAvailabilityInput>({
+    defaultValues: {
+      slotType: 'AVAILABLE',
+      therapyTypeId: therapistSpecializationId || '',
+    },
+  });
 
   const selectedDay = watch('dayOfWeek');
   const selectedSlotType = watch('slotType');
@@ -74,9 +82,12 @@ export function AvailabilitySlotForm({
   // Set therapyTypeId from therapist's specialization
   useEffect(() => {
     if (therapistSpecializationId && !isEditing) {
-      setValue('therapyTypeId', therapistSpecializationId);
+      setValue('therapyTypeId', therapistSpecializationId, { shouldValidate: true, shouldDirty: true });
     }
   }, [therapistSpecializationId, isEditing, setValue]);
+
+  // Check if therapist has specialization
+  const hasSpecialization = !!therapistSpecializationId;
 
   // Load existing slot data when editing
   useEffect(() => {
@@ -89,12 +100,15 @@ export function AvailabilitySlotForm({
     }
   }, [slot, isEditing, setValue]);
 
-  // Reset form when dialog closes
+  // Reset form when dialog closes, set therapyTypeId when it opens
   useEffect(() => {
     if (!open) {
       reset();
+    } else if (open && !isEditing && therapistSpecializationId) {
+      // Set therapyTypeId when dialog opens for new slots
+      setValue('therapyTypeId', therapistSpecializationId);
     }
-  }, [open, reset]);
+  }, [open, reset, isEditing, therapistSpecializationId, setValue]);
 
   const onSubmit = async (data: CreateAvailabilityInput) => {
     try {
@@ -107,6 +121,14 @@ export function AvailabilitySlotForm({
         };
         await updateMutation.mutateAsync(updateData);
       } else {
+        // Ensure therapyTypeId is present before submitting
+        if (!data.therapyTypeId) {
+          console.error('Form submission blocked - therapyTypeId missing. Form data:', data);
+          console.error('therapistSpecializationId prop:', therapistSpecializationId);
+          toast.error('Cannot create availability: Therapist specialization is required');
+          return;
+        }
+        console.log('Submitting availability with data:', data);
         await createMutation.mutateAsync(data);
       }
       onOpenChange(false);
@@ -131,7 +153,19 @@ export function AvailabilitySlotForm({
             </DialogDescription>
           </DialogHeader>
 
+          {!hasSpecialization && !isEditing && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                This therapist doesn't have a specialization set. Please set their specialization first before adding availability slots.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="space-y-4 py-4">
+            {/* Hidden field for therapyTypeId */}
+            <input type="hidden" {...register('therapyTypeId')} />
+            
             {/* Day of Week */}
             <div className="space-y-2">
               <Label htmlFor="dayOfWeek">
@@ -239,7 +273,7 @@ export function AvailabilitySlotForm({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading || (!hasSpecialization && !isEditing)}>
               {isLoading ? 'Saving...' : isEditing ? 'Update' : 'Create'}
             </Button>
           </DialogFooter>

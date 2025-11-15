@@ -43,7 +43,7 @@ export default function TherapistsPage() {
         }
         return (
           <div className="text-sm">
-            <span className="font-medium">${Number(sessionCost).toFixed(2)}</span>
+            <span className="font-medium"> ৳{Number(sessionCost).toFixed(2)}</span>
             <span className="text-muted-foreground"> / {sessionDuration}min</span>
           </div>
         );
