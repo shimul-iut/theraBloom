@@ -59,7 +59,7 @@ export async function getTherapistPricingList(tenantId: string, therapistId: str
             active: true,
         },
         include: {
-            therapyType: true,
+            TherapyType: true,
         },
     });
 

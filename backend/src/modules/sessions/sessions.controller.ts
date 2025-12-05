@@ -88,10 +88,10 @@ export class SessionsController {
   async createSession(req: Request, res: Response) {
     try {
       const tenantId = getTenantId(req);
-      
+
       // Validate input with Zod
       const validationResult = createSessionSchema.safeParse(req.body);
-      
+
       if (!validationResult.success) {
         return res.status(400).json({
           success: false,
@@ -102,9 +102,9 @@ export class SessionsController {
           },
         });
       }
-      
+
       const input = validationResult.data;
-      const session = await sessionsService.createSession(tenantId, input);
+      const session = await sessionsService.createSession(tenantId, input, req.auditContext);
 
       logger.info(`Session created: ${session.id} by ${req.user?.phoneNumber}`);
 
@@ -204,10 +204,10 @@ export class SessionsController {
     try {
       const tenantId = getTenantId(req);
       const sessionId = req.params.id;
-      
+
       // Validate input with Zod
       const validationResult = updateSessionSchema.safeParse(req.body);
-      
+
       if (!validationResult.success) {
         return res.status(400).json({
           success: false,
@@ -218,9 +218,9 @@ export class SessionsController {
           },
         });
       }
-      
+
       const input = validationResult.data;
-      const session = await sessionsService.updateSession(tenantId, sessionId, input);
+      const session = await sessionsService.updateSession(tenantId, sessionId, input, req.auditContext);
 
       logger.info(`Session updated: ${sessionId} by ${req.user?.phoneNumber}`);
 
@@ -300,10 +300,10 @@ export class SessionsController {
     try {
       const tenantId = getTenantId(req);
       const sessionId = req.params.id;
-      
+
       // Validate input with Zod
       const validationResult = cancelSessionSchema.safeParse(req.body);
-      
+
       if (!validationResult.success) {
         return res.status(400).json({
           success: false,
@@ -314,9 +314,9 @@ export class SessionsController {
           },
         });
       }
-      
+
       const input = validationResult.data;
-      const session = await sessionsService.cancelSession(tenantId, sessionId, input);
+      const session = await sessionsService.cancelSession(tenantId, sessionId, input, req.auditContext);
 
       logger.info(`Session cancelled: ${sessionId} by ${req.user?.phoneNumber}`);
 

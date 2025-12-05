@@ -24,7 +24,7 @@ app.use(helmet());
 // CORS
 app.use(
   cors({
-    origin: process.env.NODE_ENV === 'production' 
+    origin: process.env.NODE_ENV === 'production'
       ? process.env.FRONTEND_URL || 'http://localhost:3001'
       : 'http://localhost:3001',
     credentials: true,
@@ -41,11 +41,15 @@ app.use(morgan('combined', { stream: morganStream }));
 // Tenant context middleware (sets tenant context from authenticated user)
 app.use(setTenantContextMiddleware);
 
+// Audit context middleware (captures IP and user agent for audit logging)
+import { auditMiddleware } from './middleware/audit.middleware';
+app.use(auditMiddleware);
+
 // ============================================
 // HEALTH CHECK
 // ============================================
 
-app.get('/health', async (req, res) => {
+app.get('/health', async (_req, res) => {
   try {
     // Check database connection
     await prisma.$queryRaw`SELECT 1`;
@@ -75,7 +79,7 @@ app.get('/health', async (req, res) => {
 // API ROUTES
 // ============================================
 
-app.get('/api/v1', (req, res) => {
+app.get('/api/v1', (_req, res) => {
   res.json({
     message: 'Therapy Center Platform API',
     version: '1.0.0',
@@ -141,7 +145,7 @@ app.use((req, res) => {
 });
 
 // Global error handler
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error('Unhandled error:', {
     error: err.message,
     stack: err.stack,
@@ -153,8 +157,8 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
     success: false,
     error: {
       code: 'INTERNAL_SERVER_ERROR',
-      message: process.env.NODE_ENV === 'production' 
-        ? 'An unexpected error occurred' 
+      message: process.env.NODE_ENV === 'production'
+        ? 'An unexpected error occurred'
         : err.message,
       timestamp: new Date().toISOString(),
       path: req.path,

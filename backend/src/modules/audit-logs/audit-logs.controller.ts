@@ -180,6 +180,48 @@ export class AuditLogsController {
       });
     }
   }
+
+  /**
+   * GET /api/v1/audit-logs/count
+   * Get count of audit logs for a specific resource
+   */
+  async getLogCount(req: Request, res: Response) {
+    try {
+      const tenantId = getTenantId(req);
+      const resourceType = req.query.resourceType as string;
+      const resourceId = req.query.resourceId as string;
+
+      if (!resourceType || !resourceId) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_PARAMETERS',
+            message: 'resourceType and resourceId are required',
+          },
+        });
+      }
+
+      const count = await auditLogsService.getLogCount(
+        tenantId,
+        resourceType,
+        resourceId
+      );
+
+      return res.json({
+        success: true,
+        data: { count },
+      });
+    } catch (error) {
+      logger.error('Get log count error:', error);
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'FETCH_COUNT_FAILED',
+          message: 'Failed to fetch log count',
+        },
+      });
+    }
+  }
 }
 
 export const auditLogsController = new AuditLogsController();

@@ -16,16 +16,17 @@ import { TherapistScheduleCalendar } from '@/components/therapist/therapist-sche
 import { AvailabilitySlotForm } from '@/components/therapist/availability-slot-form';
 import { SessionQuickForm } from '@/components/therapist/session-quick-form';
 import { UnavailabilityList } from '@/components/therapist/unavailability-list';
+import { AuditLogButton } from '@/components/audit/audit-log-button';
 
 export default function TherapistDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { data: therapist, isLoading, error } = useTherapist(params.id);
-  
+
   // Availability management
   const [slotFormOpen, setSlotFormOpen] = useState(false);
   const [editingSlotId, setEditingSlotId] = useState<string | undefined>();
   const deleteAvailabilityMutation = useDeleteAvailability(params.id);
-  
+
   // Session management
   const [sessionFormOpen, setSessionFormOpen] = useState(false);
   const [sessionDate, setSessionDate] = useState<string>();
@@ -110,10 +111,13 @@ export default function TherapistDetailPage({ params }: { params: { id: string }
             <p className="text-muted-foreground">Therapist Details</p>
           </div>
         </div>
-        <Button onClick={() => router.push(`/therapists/${params.id}/edit`)}>
-          <Edit className="mr-2 h-4 w-4" />
-          Edit
-        </Button>
+        <div className="flex items-center gap-2">
+          <AuditLogButton resourceType="User" resourceId={params.id} />
+          <Button onClick={() => router.push(`/therapists/${params.id}/edit`)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edit
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">

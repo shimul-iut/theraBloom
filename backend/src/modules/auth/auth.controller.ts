@@ -13,11 +13,11 @@ export class AuthController {
       const input = loginSchema.parse(req.body);
 
       // Login
-      const result = await authService.login(input);
+      const result = await authService.login(input, req.auditContext);
 
       logger.info(`User logged in: ${result.user.phoneNumber}`);
 
-      res.json({
+      return res.json({
         success: true,
         data: result,
       });
@@ -46,7 +46,7 @@ export class AuthController {
         }
       }
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: {
           code: 'LOGIN_FAILED',
@@ -67,7 +67,7 @@ export class AuthController {
       // Refresh token
       const result = await authService.refreshToken(input.refreshToken);
 
-      res.json({
+      return res.json({
         success: true,
         data: result,
       });
@@ -90,7 +90,7 @@ export class AuthController {
         }
       }
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: {
           code: 'REFRESH_FAILED',
@@ -105,7 +105,7 @@ export class AuthController {
    */
   async logout(req: Request, res: Response) {
     try {
-      if (!req.user) {
+      if (!req.user || !req.user.userId) {
         return res.status(401).json({
           success: false,
           error: {
@@ -115,11 +115,11 @@ export class AuthController {
         });
       }
 
-      await authService.logout(req.user.userId);
+      await authService.logout(req.user.userId, req.auditContext);
 
       logger.info(`User logged out: ${req.user.phoneNumber}`);
 
-      res.json({
+      return res.json({
         success: true,
         data: {
           message: 'Logged out successfully',
@@ -128,7 +128,7 @@ export class AuthController {
     } catch (error) {
       logger.error('Logout error:', error);
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: {
           code: 'LOGOUT_FAILED',
@@ -143,7 +143,7 @@ export class AuthController {
    */
   async getCurrentUser(req: Request, res: Response) {
     try {
-      if (!req.user) {
+      if (!req.user || !req.user.userId) {
         return res.status(401).json({
           success: false,
           error: {
@@ -155,14 +155,14 @@ export class AuthController {
 
       const user = await authService.getCurrentUser(req.user.userId);
 
-      res.json({
+      return res.json({
         success: true,
         data: user,
       });
     } catch (error) {
       logger.error('Get current user error:', error);
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         error: {
           code: 'FETCH_USER_FAILED',

@@ -9,13 +9,13 @@ export class TherapistDashboardService {
   async getTherapistDashboard(tenantId: string, therapistId: string) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     const weekStart = new Date(today);
     weekStart.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
-    
+
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 7);
 
@@ -34,7 +34,7 @@ export class TherapistDashboardService {
       },
       orderBy: { startTime: 'asc' },
       include: {
-        patient: {
+        Patient: {
           select: {
             id: true,
             firstName: true,
@@ -42,7 +42,7 @@ export class TherapistDashboardService {
             guardianPhone: true,
           },
         },
-        therapyType: {
+        TherapyType: {
           select: {
             id: true,
             name: true,
@@ -150,7 +150,7 @@ export class TherapistDashboardService {
         { startTime: 'asc' },
       ],
       include: {
-        patient: {
+        Patient: {
           select: {
             id: true,
             firstName: true,
@@ -159,17 +159,23 @@ export class TherapistDashboardService {
             guardianPhone: true,
           },
         },
-        therapyType: {
+        TherapyType: {
           select: {
             id: true,
             name: true,
           },
         },
-        sessionPayments: {
+        InvoiceLineItem: {
           select: {
-            id: true,
-            amountPaid: true,
-            paidAt: true,
+            Invoice: {
+              select: {
+                id: true,
+                paidAmount: true,
+                totalAmount: true,
+                status: true,
+                paymentMethod: true,
+              },
+            },
           },
         },
       },
@@ -219,7 +225,7 @@ export class TherapistDashboardService {
         totalOutstandingDues: true,
         _count: {
           select: {
-            sessions: {
+            Session: {
               where: {
                 therapistId,
               },
@@ -256,7 +262,7 @@ export class TherapistDashboardService {
         { startTime: 'asc' },
       ],
       include: {
-        patient: {
+        Patient: {
           select: {
             id: true,
             firstName: true,
@@ -264,7 +270,7 @@ export class TherapistDashboardService {
             guardianPhone: true,
           },
         },
-        therapyType: {
+        TherapyType: {
           select: {
             id: true,
             name: true,
@@ -282,7 +288,7 @@ export class TherapistDashboardService {
   async getTodaySessions(tenantId: string, therapistId: string) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
@@ -300,7 +306,7 @@ export class TherapistDashboardService {
       },
       orderBy: { startTime: 'asc' },
       include: {
-        patient: {
+        Patient: {
           select: {
             id: true,
             firstName: true,
@@ -308,17 +314,23 @@ export class TherapistDashboardService {
             guardianPhone: true,
           },
         },
-        therapyType: {
+        TherapyType: {
           select: {
             id: true,
             name: true,
           },
         },
-        sessionPayments: {
+        InvoiceLineItem: {
           select: {
-            id: true,
-            amountPaid: true,
-            paidAt: true,
+            Invoice: {
+              select: {
+                id: true,
+                paidAmount: true,
+                totalAmount: true,
+                status: true,
+                paymentMethod: true,
+              },
+            },
           },
         },
       },
@@ -365,14 +377,14 @@ export class TherapistDashboardService {
         notes: input.notes || session.notes,
       },
       include: {
-        patient: {
+        Patient: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        therapyType: {
+        TherapyType: {
           select: {
             id: true,
             name: true,
@@ -385,12 +397,14 @@ export class TherapistDashboardService {
     if (input.progressNotes) {
       await prisma.progressReport.create({
         data: {
+          id: crypto.randomUUID(),
           tenantId,
           sessionId,
           patientId: session.patientId,
           therapistId,
           reportDate: new Date(),
           notes: input.progressNotes,
+          updatedAt: new Date(),
         },
       });
     }
@@ -405,7 +419,7 @@ export class TherapistDashboardService {
     const start = weekStart || new Date();
     start.setHours(0, 0, 0, 0);
     start.setDate(start.getDate() - start.getDay()); // Start of week (Sunday)
-    
+
     const end = new Date(start);
     end.setDate(start.getDate() + 7);
 
@@ -424,14 +438,14 @@ export class TherapistDashboardService {
         { startTime: 'asc' },
       ],
       include: {
-        patient: {
+        Patient: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        therapyType: {
+        TherapyType: {
           select: {
             id: true,
             name: true,

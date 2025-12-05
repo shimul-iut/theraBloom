@@ -2,6 +2,8 @@ import prisma from '../../config/database';
 import { CreateSessionInput, UpdateSessionInput, CancelSessionInput } from './sessions.schema';
 import { SessionStatus, DayOfWeek } from '@prisma/client';
 import { therapistPricingService } from '../therapist-pricing/therapist-pricing.service';
+import { auditLogsService } from '../audit-logs/audit-logs.service';
+import { AuditContext } from '../../middleware/audit.middleware';
 
 export class SessionsService {
   /**
@@ -145,7 +147,7 @@ export class SessionsService {
   /**
    * Create new session with availability validation and pricing lookup
    */
-  async createSession(tenantId: string, input: CreateSessionInput) {
+  async createSession(tenantId: string, input: CreateSessionInput, auditContext?: AuditContext) {
     // Verify patient exists
     const patient = await prisma.patient.findFirst({
       where: { id: input.patientId, tenantId, active: true },
@@ -263,13 +265,28 @@ export class SessionsService {
       },
     });
 
+    if (auditContext) {
+      await auditLogsService.logAction(
+        tenantId,
+        auditContext.userId,
+        'CREATE',
+        'Session',
+        session.id,
+        undefined,
+        {
+          ip: auditContext.ipAddress,
+          userAgent: auditContext.userAgent,
+        }
+      );
+    }
+
     return session;
   }
 
   /**
    * Update session (reschedule)
    */
-  async updateSession(tenantId: string, sessionId: string, input: UpdateSessionInput) {
+  async updateSession(tenantId: string, sessionId: string, input: UpdateSessionInput, auditContext?: AuditContext) {
     // Get existing session
     const existing = await prisma.session.findFirst({
       where: { id: sessionId, tenantId },
@@ -368,6 +385,28 @@ export class SessionsService {
       },
     });
 
+    if (auditContext) {
+      const changes: Record<string, any> = {};
+      if (input.scheduledDate) changes.scheduledDate = { old: existing.scheduledDate, new: session.scheduledDate };
+      if (input.startTime) changes.startTime = { old: existing.startTime, new: session.startTime };
+      if (input.endTime) changes.endTime = { old: existing.endTime, new: session.endTime };
+      if (input.status) changes.status = { old: existing.status, new: session.status };
+      if (input.notes !== undefined) changes.notes = { old: existing.notes, new: session.notes };
+
+      await auditLogsService.logAction(
+        tenantId,
+        auditContext.userId,
+        'UPDATE',
+        'Session',
+        session.id,
+        changes,
+        {
+          ip: auditContext.ipAddress,
+          userAgent: auditContext.userAgent,
+        }
+      );
+    }
+
     return session;
   }
 
@@ -375,7 +414,7 @@ export class SessionsService {
    * Cancel session with invoice-aware financial adjustments
    * Handles credit refunds and outstanding dues adjustments
    */
-  async cancelSession(tenantId: string, sessionId: string, input: CancelSessionInput) {
+  async cancelSession(tenantId: string, sessionId: string, input: CancelSessionInput, auditContext?: AuditContext) {
     const session = await prisma.session.findFirst({
       where: { id: sessionId, tenantId },
       include: {
@@ -517,6 +556,30 @@ export class SessionsService {
         adjustmentType,
       };
     });
+
+    // Log audit trail
+    if (auditContext) {
+      await auditLogsService.logAction(
+        tenantId,
+        auditContext.userId,
+        'UPDATE',
+        'Session',
+        sessionId,
+        {
+          status: { old: session.status, new: 'CANCELLED' },
+          cancelReason: { old: null, new: input.cancelReason },
+          financialAdjustment: {
+            type: result.adjustmentType,
+            creditAdded: result.creditAdded,
+            duesReduced: result.duesReduced
+          }
+        },
+        {
+          ip: auditContext.ipAddress,
+          userAgent: auditContext.userAgent,
+        }
+      );
+    }
 
     return {
       ...result.session,
@@ -831,27 +894,7 @@ export class SessionsService {
     return false;
   }
 
-  /**
-   * Legacy method for backward compatibility
-   * @deprecated Use checkTherapistSchedulingConflict instead
-   */
-  private async checkSchedulingConflict(
-    tenantId: string,
-    therapistId: string,
-    scheduledDate: Date,
-    startTime: string,
-    endTime: string,
-    excludeSessionId?: string
-  ): Promise<boolean> {
-    return this.checkTherapistSchedulingConflict(
-      tenantId,
-      therapistId,
-      scheduledDate,
-      startTime,
-      endTime,
-      excludeSessionId
-    );
-  }
+
 
   /**
    * Get day of week from date

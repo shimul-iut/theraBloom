@@ -28,6 +28,7 @@ export function requireRole(...roles: UserRole[]) {
     }
 
     next();
+    return;
   };
 }
 
@@ -80,7 +81,8 @@ export function checkResourceOwnership(resourceUserId: string) {
       req.user.role === UserRole.WORKSPACE_ADMIN ||
       req.user.role === UserRole.OPERATOR
     ) {
-      return next();
+      next();
+      return;
     }
 
     // Other users can only access their own resources
@@ -95,5 +97,6 @@ export function checkResourceOwnership(resourceUserId: string) {
     }
 
     next();
+    return;
   };
 }

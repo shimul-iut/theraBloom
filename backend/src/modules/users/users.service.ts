@@ -2,6 +2,8 @@ import prisma from '../../config/database';
 import { hashPassword, comparePassword } from '../../utils/password';
 import { CreateUserInput, UpdateUserInput, ChangePasswordInput } from './users.schema';
 import { UserRole } from '@prisma/client';
+import { auditLogsService } from '../audit-logs/audit-logs.service';
+import { AuditContext } from '../../middleware/audit.middleware';
 
 export class UsersService {
   /**
@@ -95,7 +97,7 @@ export class UsersService {
   /**
    * Create new user
    */
-  async createUser(tenantId: string, input: CreateUserInput) {
+  async createUser(tenantId: string, input: CreateUserInput, auditContext?: AuditContext) {
     // Check if phone number already exists in this tenant
     const existingPhone = await prisma.user.findFirst({
       where: {
@@ -146,13 +148,29 @@ export class UsersService {
       },
     });
 
+    // Log audit trail
+    if (auditContext) {
+      await auditLogsService.logAction(
+        tenantId,
+        auditContext.userId,
+        'CREATE',
+        'User',
+        user.id,
+        undefined,
+        {
+          ip: auditContext.ipAddress,
+          userAgent: auditContext.userAgent,
+        }
+      );
+    }
+
     return user;
   }
 
   /**
    * Update user
    */
-  async updateUser(tenantId: string, userId: string, input: UpdateUserInput) {
+  async updateUser(tenantId: string, userId: string, input: UpdateUserInput, auditContext?: AuditContext) {
     // Check if user exists
     const existingUser = await prisma.user.findFirst({
       where: {
@@ -214,13 +232,49 @@ export class UsersService {
       },
     });
 
+    // Calculate changes for audit log
+    if (auditContext) {
+      const changes: Record<string, { old: any; new: any }> = {};
+      
+      if (input.firstName && input.firstName !== existingUser.firstName) {
+        changes.firstName = { old: existingUser.firstName, new: input.firstName };
+      }
+      if (input.lastName && input.lastName !== existingUser.lastName) {
+        changes.lastName = { old: existingUser.lastName, new: input.lastName };
+      }
+      if (input.phoneNumber && input.phoneNumber !== existingUser.phoneNumber) {
+        changes.phoneNumber = { old: existingUser.phoneNumber, new: input.phoneNumber };
+      }
+      if (input.role && input.role !== existingUser.role) {
+        changes.role = { old: existingUser.role, new: input.role };
+      }
+      if (input.active !== undefined && input.active !== existingUser.active) {
+        changes.active = { old: existingUser.active, new: input.active };
+      }
+
+      if (Object.keys(changes).length > 0) {
+        await auditLogsService.logAction(
+          tenantId,
+          auditContext.userId,
+          'UPDATE',
+          'User',
+          user.id,
+          changes,
+          {
+            ip: auditContext.ipAddress,
+            userAgent: auditContext.userAgent,
+          }
+        );
+      }
+    }
+
     return user;
   }
 
   /**
    * Deactivate user (soft delete)
    */
-  async deactivateUser(tenantId: string, userId: string) {
+  async deactivateUser(tenantId: string, userId: string, auditContext?: AuditContext) {
     const user = await prisma.user.findFirst({
       where: {
         id: userId,
@@ -241,13 +295,28 @@ export class UsersService {
       data: { active: false },
     });
 
+    if (auditContext) {
+      await auditLogsService.logAction(
+        tenantId,
+        auditContext.userId,
+        'DELETE', // Using DELETE for deactivation as per requirement or convention
+        'User',
+        userId,
+        { active: { old: true, new: false } },
+        {
+          ip: auditContext.ipAddress,
+          userAgent: auditContext.userAgent,
+        }
+      );
+    }
+
     return { message: 'User deactivated successfully' };
   }
 
   /**
    * Activate user
    */
-  async activateUser(tenantId: string, userId: string) {
+  async activateUser(tenantId: string, userId: string, auditContext?: AuditContext) {
     const user = await prisma.user.findFirst({
       where: {
         id: userId,
@@ -268,13 +337,28 @@ export class UsersService {
       data: { active: true },
     });
 
+    if (auditContext) {
+      await auditLogsService.logAction(
+        tenantId,
+        auditContext.userId,
+        'UPDATE',
+        'User',
+        userId,
+        { active: { old: false, new: true } },
+        {
+          ip: auditContext.ipAddress,
+          userAgent: auditContext.userAgent,
+        }
+      );
+    }
+
     return { message: 'User activated successfully' };
   }
 
   /**
    * Change user password
    */
-  async changePassword(userId: string, input: ChangePasswordInput) {
+  async changePassword(userId: string, input: ChangePasswordInput, auditContext?: AuditContext) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
     });
@@ -297,6 +381,21 @@ export class UsersService {
       where: { id: userId },
       data: { passwordHash: newPasswordHash },
     });
+
+    if (auditContext) {
+      await auditLogsService.logAction(
+        user.tenantId,
+        auditContext.userId,
+        'UPDATE',
+        'User',
+        userId,
+        { password: { old: '***', new: '***' } }, // Don't log actual password
+        {
+          ip: auditContext.ipAddress,
+          userAgent: auditContext.userAgent,
+        }
+      );
+    }
 
     return { message: 'Password changed successfully' };
   }

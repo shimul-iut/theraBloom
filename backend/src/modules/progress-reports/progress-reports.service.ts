@@ -38,25 +38,25 @@ export class ProgressReportsService {
         take: limit,
         orderBy: { reportDate: 'desc' },
         include: {
-          patient: {
+          Patient: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
             },
           },
-          therapist: {
+          User: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
             },
           },
-          session: {
+          Session: {
             select: {
               id: true,
               scheduledDate: true,
-              therapyType: {
+              TherapyType: {
                 select: {
                   name: true,
                 },
@@ -89,7 +89,7 @@ export class ProgressReportsService {
         tenantId,
       },
       include: {
-        patient: {
+        Patient: {
           select: {
             id: true,
             firstName: true,
@@ -98,20 +98,20 @@ export class ProgressReportsService {
             guardianName: true,
           },
         },
-        therapist: {
+        User: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        session: {
+        Session: {
           select: {
             id: true,
             scheduledDate: true,
             startTime: true,
             endTime: true,
-            therapyType: {
+            TherapyType: {
               select: {
                 id: true,
                 name: true,
@@ -183,33 +183,35 @@ export class ProgressReportsService {
     // Create progress report
     const report = await prisma.progressReport.create({
       data: {
+        id: crypto.randomUUID(),
         tenantId,
         patientId: input.patientId,
         therapistId,
         sessionId: input.sessionId || null,
         reportDate: input.reportDate ? new Date(input.reportDate) : new Date(),
         notes: input.notes,
+        updatedAt: new Date(),
       },
       include: {
-        patient: {
+        Patient: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        therapist: {
+        User: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        session: {
+        Session: {
           select: {
             id: true,
             scheduledDate: true,
-            therapyType: {
+            TherapyType: {
               select: {
                 name: true,
               },
@@ -256,25 +258,25 @@ export class ProgressReportsService {
         ...(input.notes && { notes: input.notes }),
       },
       include: {
-        patient: {
+        Patient: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        therapist: {
+        User: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        session: {
+        Session: {
           select: {
             id: true,
             scheduledDate: true,
-            therapyType: {
+            TherapyType: {
               select: {
                 name: true,
               },
@@ -312,18 +314,18 @@ export class ProgressReportsService {
         take: limit,
         orderBy: { reportDate: 'desc' },
         include: {
-          therapist: {
+          User: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
             },
           },
-          session: {
+          Session: {
             select: {
               id: true,
               scheduledDate: true,
-              therapyType: {
+              TherapyType: {
                 select: {
                   name: true,
                 },
@@ -375,18 +377,18 @@ export class ProgressReportsService {
         take: limit,
         orderBy: { reportDate: 'desc' },
         include: {
-          patient: {
+          Patient: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
             },
           },
-          session: {
+          Session: {
             select: {
               id: true,
               scheduledDate: true,
-              therapyType: {
+              TherapyType: {
                 select: {
                   name: true,
                 },

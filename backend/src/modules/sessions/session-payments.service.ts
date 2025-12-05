@@ -51,8 +51,8 @@ export class SessionPaymentsService {
     const session = await prisma.session.findFirst({
       where: { id: sessionId, tenantId },
       include: {
-        patient: true,
-        sessionPayments: true,
+        Patient: true,
+        SessionPayment: true,
       },
     });
 
@@ -61,7 +61,7 @@ export class SessionPaymentsService {
     }
 
     // Calculate current payment status
-    const totalPaid = session.sessionPayments.reduce(
+    const totalPaid = session.SessionPayment.reduce(
       (sum, payment) => sum + Number(payment.amountPaid),
       0
     );
@@ -81,6 +81,7 @@ export class SessionPaymentsService {
     // Create payment record
     const payment = await prisma.sessionPayment.create({
       data: {
+        id: crypto.randomUUID(),
         tenantId,
         sessionId,
         amountPaid: input.amountPaid,
@@ -89,6 +90,7 @@ export class SessionPaymentsService {
         paidAt: input.paidAt ? new Date(input.paidAt) : new Date(),
         dueDate: input.dueDate ? new Date(input.dueDate) : null,
         isPaidInFull,
+        updatedAt: new Date(),
       },
     });
 
@@ -108,7 +110,7 @@ export class SessionPaymentsService {
       // If partial payment, update outstanding dues
       // First payment: add the due amount to outstanding
       // Subsequent payments: reduce outstanding by amount paid
-      if (session.sessionPayments.length === 0) {
+      if (session.SessionPayment.length === 0) {
         // First payment - add the remaining due to outstanding
         await prisma.patient.update({
           where: { id: session.patientId },
@@ -141,7 +143,7 @@ export class SessionPaymentsService {
     const session = await prisma.session.findFirst({
       where: { id: sessionId, tenantId },
       include: {
-        sessionPayments: true,
+        SessionPayment: true,
       },
     });
 
@@ -150,7 +152,7 @@ export class SessionPaymentsService {
     }
 
     const sessionCost = Number(session.cost);
-    const totalPaid = session.sessionPayments.reduce(
+    const totalPaid = session.SessionPayment.reduce(
       (sum, payment) => sum + Number(payment.amountPaid),
       0
     );
@@ -163,8 +165,7 @@ export class SessionPaymentsService {
       totalPaid,
       totalDue,
       isPaidInFull,
-      paidWithCredit: session.paidWithCredit,
-      paymentCount: session.sessionPayments.length,
+      paymentCount: session.SessionPayment.length,
     };
   }
 }

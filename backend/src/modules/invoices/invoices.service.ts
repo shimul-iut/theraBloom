@@ -1,5 +1,7 @@
 import prisma from '../../config/database';
 import { Prisma, PaymentMethod } from '@prisma/client';
+import { auditLogsService } from '../audit-logs/audit-logs.service';
+import { AuditContext } from '../../middleware/audit.middleware';
 
 interface CreateInvoiceInput {
   tenantId: string;
@@ -145,7 +147,7 @@ export class InvoicesService {
    * Create invoice for selected sessions
    * Handles payment, credit application, and balance updates
    */
-  async createInvoice(input: CreateInvoiceInput): Promise<CreateInvoiceResult> {
+  async createInvoice(input: CreateInvoiceInput, auditContext?: AuditContext): Promise<CreateInvoiceResult> {
     const {
       tenantId,
       patientId,
@@ -168,7 +170,7 @@ export class InvoicesService {
       throw new Error('At least one session must be selected');
     }
 
-    return await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       // 1. Fetch and validate sessions
       const sessions = await tx.session.findMany({
         where: {
@@ -288,31 +290,56 @@ export class InvoicesService {
         },
       });
 
-      // 8. Return result
       return {
-        invoice: {
-          id: invoice.id,
-          invoiceNumber: invoice.invoiceNumber,
-          invoiceDate: invoice.invoiceDate,
-          totalAmount: Number(invoice.totalAmount),
-          paidAmount: Number(invoice.paidAmount),
-          creditUsed: Number(invoice.creditUsed),
-          outstandingAmount: Number(invoice.outstandingAmount),
-          paymentMethod: invoice.paymentMethod,
-          lineItems: lineItemsData.map((item) => ({
-            sessionId: item.sessionId,
-            description: item.description,
-            amount: Number(item.amount),
-          })),
-        },
-        patient: {
-          id: patient.id,
-          name: `${patient.firstName} ${patient.lastName}`,
-          creditBalance: newCreditBalance,
-          totalOutstandingDues: newOutstandingDues,
-        },
+        invoice,
+        patient,
+        lineItemsData,
+        newCreditBalance,
+        newOutstandingDues
       };
     });
+
+    // Log audit trail
+    if (auditContext) {
+      await auditLogsService.logAction(
+        tenantId,
+        auditContext.userId,
+        'CREATE',
+        'Invoice',
+        result.invoice.id,
+        undefined,
+        {
+          ip: auditContext.ipAddress,
+          userAgent: auditContext.userAgent,
+        }
+      );
+    }
+
+    // 8. Return result
+    return {
+      invoice: {
+        id: result.invoice.id,
+        invoiceNumber: result.invoice.invoiceNumber,
+        invoiceDate: result.invoice.invoiceDate,
+        totalAmount: Number(result.invoice.totalAmount),
+        paidAmount: Number(result.invoice.paidAmount),
+        creditUsed: Number(result.invoice.creditUsed),
+        outstandingAmount: Number(result.invoice.outstandingAmount),
+        paymentMethod: result.invoice.paymentMethod,
+        lineItems: result.lineItemsData.map((item) => ({
+          sessionId: item.sessionId,
+          description: item.description,
+          amount: Number(item.amount),
+        })),
+      },
+      patient: {
+        id: result.patient.id,
+        name: `${result.patient.firstName} ${result.patient.lastName}`,
+        creditBalance: result.newCreditBalance,
+        totalOutstandingDues: result.newOutstandingDues,
+      },
+    };
+
   }
 
   /**
@@ -548,11 +575,11 @@ export class InvoicesService {
       status: 'ACTIVE', // Exclude VOID invoices from patient invoice history
       ...(startDate || endDate
         ? {
-            invoiceDate: {
-              ...(startDate ? { gte: startDate } : {}),
-              ...(endDate ? { lte: endDate } : {}),
-            },
-          }
+          invoiceDate: {
+            ...(startDate ? { gte: startDate } : {}),
+            ...(endDate ? { lte: endDate } : {}),
+          },
+        }
         : {}),
     };
 
@@ -579,8 +606,8 @@ export class InvoicesService {
 
     // Calculate summary (exclude VOID invoices)
     const allInvoices = await prisma.invoice.findMany({
-      where: { 
-        patientId, 
+      where: {
+        patientId,
         tenantId,
         status: 'ACTIVE', // Only include active invoices in summary
       },

@@ -16,6 +16,7 @@ import {
   ClipboardList,
   Bell,
   Shield,
+  History,
 } from 'lucide-react';
 
 interface NavItem {
@@ -86,7 +87,7 @@ const navItems: NavItem[] = [
     title: 'Audit Logs',
     href: '/audit-logs',
     icon: Shield,
-    roles: ['WORKSPACE_ADMIN', 'OPERATOR'],
+    roles: ['WORKSPACE_ADMIN', 'ACCOUNTANT'],
   },
   {
     title: 'Settings',

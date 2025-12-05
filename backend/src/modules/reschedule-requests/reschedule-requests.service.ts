@@ -34,16 +34,16 @@ export class RescheduleRequestsService {
         take: limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          session: {
+          Session: {
             include: {
-              patient: {
+              Patient: {
                 select: {
                   id: true,
                   firstName: true,
                   lastName: true,
                 },
               },
-              therapyType: {
+              TherapyType: {
                 select: {
                   id: true,
                   name: true,
@@ -51,14 +51,14 @@ export class RescheduleRequestsService {
               },
             },
           },
-          therapist: {
+          User_RescheduleRequest_therapistIdToUser: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
             },
           },
-          reviewer: {
+          User_RescheduleRequest_reviewedByToUser: {
             select: {
               id: true,
               firstName: true,
@@ -91,16 +91,16 @@ export class RescheduleRequestsService {
         tenantId,
       },
       include: {
-        session: {
+        Session: {
           include: {
-            patient: {
+            Patient: {
               select: {
                 id: true,
                 firstName: true,
                 lastName: true,
               },
             },
-            therapyType: {
+            TherapyType: {
               select: {
                 id: true,
                 name: true,
@@ -108,14 +108,14 @@ export class RescheduleRequestsService {
             },
           },
         },
-        therapist: {
+        User_RescheduleRequest_therapistIdToUser: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        reviewer: {
+        User_RescheduleRequest_reviewedByToUser: {
           select: {
             id: true,
             firstName: true,
@@ -188,6 +188,7 @@ export class RescheduleRequestsService {
     // Create reschedule request
     const request = await prisma.rescheduleRequest.create({
       data: {
+        id: crypto.randomUUID(),
         tenantId,
         sessionId: input.sessionId,
         therapistId,
@@ -195,18 +196,19 @@ export class RescheduleRequestsService {
         requestedTime: input.requestedTime,
         reason: input.reason,
         status: 'PENDING',
+        updatedAt: new Date(),
       },
       include: {
-        session: {
+        Session: {
           include: {
-            patient: {
+            Patient: {
               select: {
                 id: true,
                 firstName: true,
                 lastName: true,
               },
             },
-            therapyType: {
+            TherapyType: {
               select: {
                 id: true,
                 name: true,
@@ -214,7 +216,7 @@ export class RescheduleRequestsService {
             },
           },
         },
-        therapist: {
+        User_RescheduleRequest_therapistIdToUser: {
           select: {
             id: true,
             firstName: true,
@@ -243,7 +245,7 @@ export class RescheduleRequestsService {
         tenantId,
       },
       include: {
-        session: true,
+        Session: true,
       },
     });
 
@@ -265,16 +267,16 @@ export class RescheduleRequestsService {
         reviewNotes: input.reviewNotes || null,
       },
       include: {
-        session: {
+        Session: {
           include: {
-            patient: {
+            Patient: {
               select: {
                 id: true,
                 firstName: true,
                 lastName: true,
               },
             },
-            therapyType: {
+            TherapyType: {
               select: {
                 id: true,
                 name: true,
@@ -282,14 +284,14 @@ export class RescheduleRequestsService {
             },
           },
         },
-        therapist: {
+        User_RescheduleRequest_therapistIdToUser: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        reviewer: {
+        User_RescheduleRequest_reviewedByToUser: {
           select: {
             id: true,
             firstName: true,
@@ -348,16 +350,16 @@ export class RescheduleRequestsService {
         reviewNotes: input.reviewNotes || null,
       },
       include: {
-        session: {
+        Session: {
           include: {
-            patient: {
+            Patient: {
               select: {
                 id: true,
                 firstName: true,
                 lastName: true,
               },
             },
-            therapyType: {
+            TherapyType: {
               select: {
                 id: true,
                 name: true,
@@ -365,14 +367,14 @@ export class RescheduleRequestsService {
             },
           },
         },
-        therapist: {
+        User_RescheduleRequest_therapistIdToUser: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        reviewer: {
+        User_RescheduleRequest_reviewedByToUser: {
           select: {
             id: true,
             firstName: true,
@@ -417,16 +419,16 @@ export class RescheduleRequestsService {
         status: 'CANCELLED',
       },
       include: {
-        session: {
+        Session: {
           include: {
-            patient: {
+            Patient: {
               select: {
                 id: true,
                 firstName: true,
                 lastName: true,
               },
             },
-            therapyType: {
+            TherapyType: {
               select: {
                 id: true,
                 name: true,
@@ -434,7 +436,7 @@ export class RescheduleRequestsService {
             },
           },
         },
-        therapist: {
+        User_RescheduleRequest_therapistIdToUser: {
           select: {
             id: true,
             firstName: true,

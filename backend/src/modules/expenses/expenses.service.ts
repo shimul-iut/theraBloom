@@ -37,7 +37,7 @@ export class ExpensesService {
         take: limit,
         orderBy: { date: 'desc' },
         include: {
-          createdByUser: {
+          User: {
             select: {
               id: true,
               firstName: true,
@@ -70,7 +70,7 @@ export class ExpensesService {
         tenantId,
       },
       include: {
-        createdByUser: {
+        User: {
           select: {
             id: true,
             firstName: true,
@@ -93,6 +93,7 @@ export class ExpensesService {
   async createExpense(tenantId: string, userId: string, input: CreateExpenseInput) {
     const expense = await prisma.expense.create({
       data: {
+        id: crypto.randomUUID(),
         tenantId,
         category: input.category,
         amount: input.amount,
@@ -100,9 +101,10 @@ export class ExpensesService {
         description: input.description,
         paymentMethod: input.paymentMethod,
         createdBy: userId,
+        updatedAt: new Date(),
       },
       include: {
-        createdByUser: {
+        User: {
           select: {
             id: true,
             firstName: true,
@@ -146,7 +148,7 @@ export class ExpensesService {
       where: { id: expenseId },
       data: updateData,
       include: {
-        createdByUser: {
+        User: {
           select: {
             id: true,
             firstName: true,

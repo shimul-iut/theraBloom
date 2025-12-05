@@ -39,6 +39,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
 
     // Attach user info to request
     req.user = {
+      id: payload.userId,
       userId: payload.userId,
       tenantId: payload.tenantId,
       role: payload.role,
@@ -46,6 +47,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
     };
 
     next();
+    return;
   } catch (error) {
     logger.error('Authentication error:', error);
 
@@ -84,7 +86,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
 /**
  * Optional authentication - doesn't fail if no token provided
  */
-export function optionalAuthenticate(req: Request, res: Response, next: NextFunction) {
+export function optionalAuthenticate(req: Request, _res: Response, next: NextFunction) {
   try {
     const authHeader = req.headers.authorization;
 
@@ -98,6 +100,7 @@ export function optionalAuthenticate(req: Request, res: Response, next: NextFunc
       const payload = verifyAccessToken(token);
 
       req.user = {
+        id: payload.userId,
         userId: payload.userId,
         tenantId: payload.tenantId,
         role: payload.role,

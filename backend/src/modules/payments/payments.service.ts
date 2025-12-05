@@ -3,6 +3,8 @@ import { RecordPaymentInput } from './payments.schema';
 import { PaymentMethod } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { invoicesService } from '../invoices/invoices.service';
+import { auditLogsService } from '../audit-logs/audit-logs.service';
+import { AuditContext } from '../../middleware/audit.middleware';
 
 export class PaymentsService {
   /**
@@ -109,7 +111,7 @@ export class PaymentsService {
   /**
    * Record payment (credit purchase or general payment)
    */
-  async recordPayment(tenantId: string, confirmedBy: string, input: RecordPaymentInput) {
+  async recordPayment(tenantId: string, confirmedBy: string, input: RecordPaymentInput, auditContext?: AuditContext) {
     // Verify patient exists
     const patient = await prisma.patient.findFirst({
       where: {
@@ -177,6 +179,23 @@ export class PaymentsService {
           },
         },
       });
+    }
+
+
+
+    if (auditContext) {
+      await auditLogsService.logAction(
+        tenantId,
+        auditContext.userId,
+        'CREATE',
+        'Payment',
+        payment.id,
+        undefined,
+        {
+          ip: auditContext.ipAddress,
+          userAgent: auditContext.userAgent,
+        }
+      );
     }
 
     return payment;

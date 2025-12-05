@@ -17,7 +17,6 @@ export interface Session {
   endTime: string;
   status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
   cost: number;
-  paidWithCredit?: boolean;
   notes?: string;
   cancelReason?: string;
   createdAt: string;
@@ -196,10 +195,26 @@ export function useCancelSession(id: string) {
       const response = await api.post(`/sessions/${id}/cancel`, data);
       return response.data.data;
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       queryClient.invalidateQueries({ queryKey: ['sessions', id] });
-      toast.success('Session cancelled successfully');
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['patient-balance'] });
+      
+      // Show notification based on financial adjustment type
+      if (data.adjustmentType === 'credit' && data.creditAdded > 0) {
+        toast.success('Session cancelled successfully', {
+          description: `৳${data.creditAdded.toFixed(2)} has been added to patient's credit balance`,
+          duration: 5000,
+        });
+      } else if (data.adjustmentType === 'dues' && data.duesReduced > 0) {
+        toast.success('Session cancelled successfully', {
+          description: `৳${data.duesReduced.toFixed(2)} has been deducted from outstanding dues`,
+          duration: 5000,
+        });
+      } else {
+        toast.success('Session cancelled successfully');
+      }
     },
     onError: (error: any) => {
       toast.error(formatErrorForDisplay(error));

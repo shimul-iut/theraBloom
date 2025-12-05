@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { LoadingPage } from '@/components/shared/loading-spinner';
 import { ErrorMessage } from '@/components/shared/error-boundary';
 import { ArrowLeft, Edit, Calendar, DollarSign, FileText, Receipt, ExternalLink } from 'lucide-react';
+import { AuditLogButton } from '@/components/audit/audit-log-button';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -55,10 +56,17 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
             <p className="text-muted-foreground">Patient Details</p>
           </div>
         </div>
-        <Button onClick={() => router.push(`/patients/${patient.id}/edit`)}>
-          <Edit className="mr-2 h-4 w-4" />
-          Edit Patient
-        </Button>
+        <div className="flex gap-2">
+          <AuditLogButton
+            resourceType="Patient"
+            resourceId={patient.id}
+            variant="outline"
+          />
+          <Button onClick={() => router.push(`/patients/${patient.id}/edit`)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edit Patient
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">

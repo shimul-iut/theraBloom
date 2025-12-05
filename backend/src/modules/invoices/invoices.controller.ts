@@ -114,7 +114,7 @@ export class InvoicesController {
         tenantId,
         confirmedBy,
         ...input,
-      });
+      }, req.auditContext);
 
       logger.info(
         `Invoice created: ${result.invoice.invoiceNumber} for patient ${input.patientId} by ${req.user?.phoneNumber}`

@@ -7,6 +7,7 @@ import { useSessions, Session } from '@/hooks/use-sessions';
 import { useTherapists } from '@/hooks/use-therapists';
 import { Calendar } from '@/components/schedule/calendar';
 import { SessionList } from '@/components/schedule/session-list';
+import { CancelSessionDialog } from '@/components/schedule/cancel-session-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -23,6 +24,8 @@ export default function SchedulePage() {
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [selectedTherapist, setSelectedTherapist] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [sessionToCancel, setSessionToCancel] = useState<Session | null>(null);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   // Get current month range for initial load
   const monthStart = startOfMonth(selectedDate);
@@ -68,8 +71,8 @@ export default function SchedulePage() {
   };
 
   const handleCancelSession = (session: Session) => {
-    // TODO: Implement cancel session
-    console.log('Cancel session:', session);
+    setSessionToCancel(session);
+    setCancelDialogOpen(true);
   };
 
   return (
@@ -208,6 +211,13 @@ export default function SchedulePage() {
           </div>
         )}
       </div>
+
+      {/* Cancel Session Dialog */}
+      <CancelSessionDialog
+        session={sessionToCancel}
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
+      />
     </div>
   );
 }

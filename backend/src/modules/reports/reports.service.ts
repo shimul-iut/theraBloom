@@ -135,7 +135,7 @@ export class ReportsService {
       select: {
         cost: true,
         scheduledDate: true,
-        therapyType: {
+        TherapyType: {
           select: { name: true },
         },
       },
@@ -146,7 +146,7 @@ export class ReportsService {
     // Revenue by therapy type
     const revenueByType = new Map<string, number>();
     for (const session of sessions) {
-      const typeName = session.therapyType.name;
+      const typeName = session.TherapyType.name;
       const current = revenueByType.get(typeName) || 0;
       revenueByType.set(typeName, current + Number(session.cost));
     }
@@ -298,21 +298,21 @@ export class ReportsService {
       where,
       orderBy: { scheduledDate: 'desc' },
       include: {
-        patient: {
+        Patient: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        therapist: {
+        User: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
           },
         },
-        therapyType: {
+        TherapyType: {
           select: {
             id: true,
             name: true,
@@ -334,7 +334,7 @@ export class ReportsService {
     // Sessions by therapist
     const sessionsByTherapist = new Map<string, { name: string; count: number; revenue: number }>();
     for (const session of sessions) {
-      const therapistName = `${session.therapist.firstName} ${session.therapist.lastName}`;
+      const therapistName = `${session.User.firstName} ${session.User.lastName}`;
       const current = sessionsByTherapist.get(session.therapistId) || {
         name: therapistName,
         count: 0,
@@ -359,7 +359,7 @@ export class ReportsService {
     // Sessions by therapy type
     const sessionsByType = new Map<string, { name: string; count: number; revenue: number }>();
     for (const session of sessions) {
-      const typeName = session.therapyType.name;
+      const typeName = session.TherapyType.name;
       const current = sessionsByType.get(session.therapyTypeId) || {
         name: typeName,
         count: 0,

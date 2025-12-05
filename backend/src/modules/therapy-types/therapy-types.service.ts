@@ -7,7 +7,7 @@ export class TherapyTypesService {
    */
   async getTherapyTypes(tenantId: string, activeOnly = false) {
     const where: any = { tenantId };
-    
+
     if (activeOnly) {
       where.active = true;
     }
@@ -81,12 +81,14 @@ export class TherapyTypesService {
 
     const therapyType = await prisma.therapyType.create({
       data: {
+        id: crypto.randomUUID(),
         tenantId,
         name: input.name,
         description: input.description || null,
         defaultDuration: input.defaultDuration,
         defaultCost: input.defaultCost,
         active: true,
+        updatedAt: new Date(),
       },
       select: {
         id: true,
@@ -184,7 +186,7 @@ export class TherapyTypesService {
     }
 
     // Prevent deletion if there are active sessions
-    if (therapyType._count.sessions > 0) {
+    if (therapyType._count.Session > 0) {
       throw new Error(
         'Cannot delete therapy type with existing sessions. Deactivate it instead.'
       );

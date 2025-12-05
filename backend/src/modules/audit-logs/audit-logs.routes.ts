@@ -16,6 +16,12 @@ router.use(requireAdminOrOperator);
 router.get('/', (req, res) => auditLogsController.getAuditLogs(req, res));
 
 /**
+ * GET /api/v1/audit-logs/count
+ * Get count of audit logs for a specific resource
+ */
+router.get('/count', (req, res) => auditLogsController.getLogCount(req, res));
+
+/**
  * GET /api/v1/audit-logs/statistics
  * Get audit statistics
  */

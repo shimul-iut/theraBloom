@@ -1,5 +1,8 @@
 import prisma from '../../config/database';
 import { CreatePatientInput, UpdatePatientInput } from './patients.schema';
+import { randomUUID } from 'crypto';
+import { auditLogsService } from '../audit-logs/audit-logs.service';
+import { AuditContext } from '../../middleware/audit.middleware';
 
 export class PatientsService {
   /**
@@ -93,9 +96,14 @@ export class PatientsService {
   /**
    * Create new patient
    */
-  async createPatient(tenantId: string, input: CreatePatientInput) {
+  async createPatient(
+    tenantId: string,
+    input: CreatePatientInput,
+    auditContext?: AuditContext
+  ) {
     const patient = await prisma.patient.create({
       data: {
+        id: randomUUID(),
         tenantId,
         firstName: input.firstName,
         lastName: input.lastName,
@@ -107,6 +115,7 @@ export class PatientsService {
         medicalNotes: input.medicalNotes || null,
         creditBalance: input.creditBalance || 0,
         active: true,
+        updatedAt: new Date(),
       },
       select: {
         id: true,
@@ -124,13 +133,34 @@ export class PatientsService {
       },
     });
 
+    // Log audit trail
+    if (auditContext) {
+      await auditLogsService.logAction(
+        tenantId,
+        auditContext.userId,
+        'CREATE',
+        'Patient',
+        patient.id,
+        undefined,
+        {
+          ip: auditContext.ipAddress,
+          userAgent: auditContext.userAgent,
+        }
+      );
+    }
+
     return patient;
   }
 
   /**
    * Update patient
    */
-  async updatePatient(tenantId: string, patientId: string, input: UpdatePatientInput) {
+  async updatePatient(
+    tenantId: string,
+    patientId: string,
+    input: UpdatePatientInput,
+    auditContext?: AuditContext
+  ) {
     // Check if patient exists
     const existingPatient = await prisma.patient.findFirst({
       where: {
@@ -175,6 +205,43 @@ export class PatientsService {
       },
     });
 
+    // Calculate changes for audit log
+    if (auditContext) {
+      const changes: Record<string, { old: any; new: any }> = {};
+      
+      if (input.firstName && input.firstName !== existingPatient.firstName) {
+        changes.firstName = { old: existingPatient.firstName, new: input.firstName };
+      }
+      if (input.lastName && input.lastName !== existingPatient.lastName) {
+        changes.lastName = { old: existingPatient.lastName, new: input.lastName };
+      }
+      if (input.guardianName && input.guardianName !== existingPatient.guardianName) {
+        changes.guardianName = { old: existingPatient.guardianName, new: input.guardianName };
+      }
+      if (input.guardianPhone && input.guardianPhone !== existingPatient.guardianPhone) {
+        changes.guardianPhone = { old: existingPatient.guardianPhone, new: input.guardianPhone };
+      }
+      if (input.active !== undefined && input.active !== existingPatient.active) {
+        changes.active = { old: existingPatient.active, new: input.active };
+      }
+
+      // Log audit trail if there are changes
+      if (Object.keys(changes).length > 0) {
+        await auditLogsService.logAction(
+          tenantId,
+          auditContext.userId,
+          'UPDATE',
+          'Patient',
+          patient.id,
+          changes,
+          {
+            ip: auditContext.ipAddress,
+            userAgent: auditContext.userAgent,
+          }
+        );
+      }
+    }
+
     return patient;
   }
 
@@ -203,14 +270,14 @@ export class PatientsService {
         take: limit,
         orderBy: { scheduledDate: 'desc' },
         include: {
-          therapist: {
+          User: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
             },
           },
-          therapyType: {
+          TherapyType: {
             select: {
               id: true,
               name: true,
@@ -257,7 +324,7 @@ export class PatientsService {
         take: limit,
         orderBy: { date: 'desc' },
         include: {
-          confirmedByUser: {
+          User: {
             select: {
               id: true,
               firstName: true,
@@ -281,7 +348,7 @@ export class PatientsService {
   }
 
   /**
-   * Get patient outstanding dues
+   * Get patient outstanding dues (invoice-based system)
    */
   async getPatientOutstandingDues(tenantId: string, patientId: string) {
     // Verify patient exists and belongs to tenant
@@ -292,6 +359,7 @@ export class PatientsService {
         firstName: true,
         lastName: true,
         totalOutstandingDues: true,
+        creditBalance: true,
       },
     });
 
@@ -299,30 +367,36 @@ export class PatientsService {
       throw new Error('Patient not found');
     }
 
-    // Get sessions with outstanding payments
-    const sessionsWithDues = await prisma.session.findMany({
+    // Get invoices with outstanding amounts
+    const invoicesWithDues = await prisma.invoice.findMany({
       where: {
         patientId,
         tenantId,
-        sessionPayments: {
-          some: {
-            isPaidInFull: false,
-          },
+        outstandingAmount: {
+          gt: 0,
+        },
+        status: {
+          not: 'VOID',
         },
       },
       include: {
-        sessionPayments: {
-          where: {
-            isPaidInFull: false,
-          },
-        },
-        therapyType: {
-          select: {
-            name: true,
+        InvoiceLineItem: {
+          include: {
+            Session: {
+              select: {
+                id: true,
+                scheduledDate: true,
+                TherapyType: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
-      orderBy: { scheduledDate: 'desc' },
+      orderBy: { invoiceDate: 'desc' },
     });
 
     return {
@@ -330,20 +404,20 @@ export class PatientsService {
         id: patient.id,
         name: `${patient.firstName} ${patient.lastName}`,
         totalOutstandingDues: patient.totalOutstandingDues,
+        creditBalance: patient.creditBalance,
       },
-      sessionsWithDues: sessionsWithDues.map((session) => ({
-        sessionId: session.id,
-        scheduledDate: session.scheduledDate,
-        therapyType: session.therapyType.name,
-        totalCost: session.cost,
-        amountPaid: session.sessionPayments.reduce(
-          (sum, payment) => sum + Number(payment.amountPaid),
-          0
-        ),
-        amountDue: session.sessionPayments.reduce(
-          (sum, payment) => sum + Number(payment.amountDue),
-          0
-        ),
+      invoicesWithDues: invoicesWithDues.map((invoice) => ({
+        invoiceId: invoice.id,
+        invoiceNumber: invoice.invoiceNumber,
+        invoiceDate: invoice.invoiceDate,
+        totalAmount: invoice.totalAmount,
+        outstandingAmount: invoice.outstandingAmount,
+        sessions: invoice.InvoiceLineItem.map((item) => ({
+          sessionId: item.Session.id,
+          scheduledDate: item.Session.scheduledDate,
+          therapyType: item.Session.TherapyType.name,
+          cost: item.amount,
+        })),
       })),
     };
   }

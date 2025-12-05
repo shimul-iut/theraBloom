@@ -79,7 +79,11 @@ export class PatientsController {
       const tenantId = getTenantId(req);
       const input = createPatientSchema.parse(req.body);
 
-      const patient = await patientsService.createPatient(tenantId, input);
+      const patient = await patientsService.createPatient(
+        tenantId,
+        input,
+        req.auditContext
+      );
 
       logger.info(`Patient created: ${patient.firstName} ${patient.lastName} by ${req.user?.phoneNumber}`);
 
@@ -120,7 +124,12 @@ export class PatientsController {
       const patientId = req.params.id;
       const input = updatePatientSchema.parse(req.body);
 
-      const patient = await patientsService.updatePatient(tenantId, patientId, input);
+      const patient = await patientsService.updatePatient(
+        tenantId,
+        patientId,
+        input,
+        req.auditContext
+      );
 
       logger.info(`Patient updated: ${patientId} by ${req.user?.phoneNumber}`);
 

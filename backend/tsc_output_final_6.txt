@@ -1,0 +1,42 @@
+﻿src/middleware/auth.ts(8,17): error TS7030: Not all code paths return a value.
+src/middleware/auth.ts(88,52): error TS6133: 'res' is declared but its value is never read.
+src/middleware/rbac.ts(9,10): error TS7030: Not all code paths return a value.
+src/middleware/tenant.ts(25,17): error TS7030: Not all code paths return a value.
+src/modules/auth/auth.controller.ts(10,9): error TS7030: Not all code paths return a value.
+src/modules/auth/auth.controller.ts(62,9): error TS7030: Not all code paths return a value.
+src/modules/auth/auth.controller.ts(106,9): error TS7030: Not all code paths return a value.
+src/modules/auth/auth.controller.ts(118,32): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/modules/auth/auth.controller.ts(144,9): error TS7030: Not all code paths return a value.
+src/modules/auth/auth.controller.ts(156,53): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/modules/reports/reports.service.ts(138,9): error TS2561: Object literal may only specify known properties, but 'therapyType' does not exist in type 'SessionSelect<DefaultArgs>'. Did you mean to write 'TherapyType'?
+src/modules/reports/reports.service.ts(149,32): error TS2551: Property 'therapyType' does not exist on type '{ status: SessionStatus; tenantId: string; id: string; createdAt: Date; updatedAt: Date; patientId: string; therapistId: string; therapyTypeId: string; scheduledDate: Date; ... 4 more ...; cancelReason: string | null; }'. Did you mean 'therapyTypeId'?
+src/modules/reports/reports.service.ts(301,9): error TS2561: Object literal may only specify known properties, but 'patient' does not exist in type 'SessionInclude<DefaultArgs>'. Did you mean to write 'Patient'?
+src/modules/reports/reports.service.ts(337,40): error TS2551: Property 'therapist' does not exist on type '{ status: SessionStatus; tenantId: string; id: string; createdAt: Date; updatedAt: Date; patientId: string; therapistId: string; therapyTypeId: string; scheduledDate: Date; ... 4 more ...; cancelReason: string | null; }'. Did you mean 'therapistId'?
+src/modules/reports/reports.service.ts(337,71): error TS2551: Property 'therapist' does not exist on type '{ status: SessionStatus; tenantId: string; id: string; createdAt: Date; updatedAt: Date; patientId: string; therapistId: string; therapyTypeId: string; scheduledDate: Date; ... 4 more ...; cancelReason: string | null; }'. Did you mean 'therapistId'?
+src/modules/reports/reports.service.ts(362,32): error TS2551: Property 'therapyType' does not exist on type '{ status: SessionStatus; tenantId: string; id: string; createdAt: Date; updatedAt: Date; patientId: string; therapistId: string; therapyTypeId: string; scheduledDate: Date; ... 4 more ...; cancelReason: string | null; }'. Did you mean 'therapyTypeId'?
+src/modules/reschedule-requests/reschedule-requests.service.ts(37,11): error TS2561: Object literal may only specify known properties, but 'session' does not exist in type 'RescheduleRequestInclude<DefaultArgs>'. Did you mean to write 'Session'?
+src/modules/reschedule-requests/reschedule-requests.service.ts(94,9): error TS2561: Object literal may only specify known properties, but 'session' does not exist in type 'RescheduleRequestInclude<DefaultArgs>'. Did you mean to write 'Session'?
+src/modules/reschedule-requests/reschedule-requests.service.ts(190,7): error TS2322: Type '{ tenantId: string; sessionId: string; therapistId: string; requestedDate: Date; requestedTime: string; reason: string; status: "PENDING"; }' is not assignable to type '(Without<RescheduleRequestCreateInput, RescheduleRequestUncheckedCreateInput> & RescheduleRequestUncheckedCreateInput) | (Without<...> & RescheduleRequestCreateInput)'.
+  Type '{ tenantId: string; sessionId: string; therapistId: string; requestedDate: Date; requestedTime: string; reason: string; status: "PENDING"; }' is not assignable to type 'Without<RescheduleRequestCreateInput, RescheduleRequestUncheckedCreateInput> & RescheduleRequestUncheckedCreateInput'.
+    Type '{ tenantId: string; sessionId: string; therapistId: string; requestedDate: Date; requestedTime: string; reason: string; status: "PENDING"; }' is missing the following properties from type 'RescheduleRequestUncheckedCreateInput': id, updatedAt
+src/modules/reschedule-requests/reschedule-requests.service.ts(200,9): error TS2561: Object literal may only specify known properties, but 'session' does not exist in type 'RescheduleRequestInclude<DefaultArgs>'. Did you mean to write 'Session'?
+src/modules/reschedule-requests/reschedule-requests.service.ts(246,9): error TS2561: Object literal may only specify known properties, but 'session' does not exist in type 'RescheduleRequestInclude<DefaultArgs>'. Did you mean to write 'Session'?
+src/modules/reschedule-requests/reschedule-requests.service.ts(268,9): error TS2561: Object literal may only specify known properties, but 'session' does not exist in type 'RescheduleRequestInclude<DefaultArgs>'. Did you mean to write 'Session'?
+src/modules/reschedule-requests/reschedule-requests.service.ts(351,9): error TS2561: Object literal may only specify known properties, but 'session' does not exist in type 'RescheduleRequestInclude<DefaultArgs>'. Did you mean to write 'Session'?
+src/modules/reschedule-requests/reschedule-requests.service.ts(420,9): error TS2561: Object literal may only specify known properties, but 'session' does not exist in type 'RescheduleRequestInclude<DefaultArgs>'. Did you mean to write 'Session'?
+src/modules/sessions/sessions.service.ts(901,17): error TS6133: 'checkSchedulingConflict' is declared but its value is never read.
+src/modules/therapy-types/therapy-types.service.ts(83,7): error TS2322: Type '{ tenantId: string; name: string; description: string | null; defaultDuration: number; defaultCost: number; active: true; }' is not assignable to type '(Without<TherapyTypeCreateInput, TherapyTypeUncheckedCreateInput> & TherapyTypeUncheckedCreateInput) | (Without<...> & TherapyTypeCreateInput)'.
+  Type '{ tenantId: string; name: string; description: string | null; defaultDuration: number; defaultCost: number; active: true; }' is not assignable to type 'Without<TherapyTypeCreateInput, TherapyTypeUncheckedCreateInput> & TherapyTypeUncheckedCreateInput'.
+    Type '{ tenantId: string; name: string; description: string | null; defaultDuration: number; defaultCost: number; active: true; }' is missing the following properties from type 'TherapyTypeUncheckedCreateInput': id, updatedAt
+src/modules/therapy-types/therapy-types.service.ts(187,28): error TS2551: Property 'sessions' does not exist on type '{ Session: number; }'. Did you mean 'Session'?
+src/modules/users/users.controller.ts(40,11): error TS7030: Not all code paths return a value.
+src/modules/users/users.controller.ts(77,11): error TS7030: Not all code paths return a value.
+src/modules/users/users.controller.ts(170,11): error TS7030: Not all code paths return a value.
+src/modules/users/users.controller.ts(232,11): error TS7030: Not all code paths return a value.
+src/modules/users/users.controller.ts(283,11): error TS7030: Not all code paths return a value.
+src/server.ts(52,27): error TS6133: 'req' is declared but its value is never read.
+src/server.ts(82,21): error TS6133: 'req' is declared but its value is never read.
+src/server.ts(148,67): error TS6133: 'next' is declared but its value is never read.
+src/utils/pricing.ts(62,13): error TS2561: Object literal may only specify known properties, but 'therapyType' does not exist in type 'TherapistPricingInclude<DefaultArgs>'. Did you mean to write 'TherapyType'?

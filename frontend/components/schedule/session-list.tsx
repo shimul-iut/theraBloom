@@ -6,7 +6,7 @@ import { Session } from '@/hooks/use-sessions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, User, Phone, Edit, Trash2, FileText } from 'lucide-react';
+import { Clock, User, Phone, Edit, Trash2, FileText, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SessionListProps {
@@ -17,15 +17,15 @@ interface SessionListProps {
   onAddSession?: () => void;
 }
 
-export function SessionList({ 
-  sessions, 
-  selectedDate, 
-  onEditSession, 
-  onCancelSession, 
-  onAddSession 
+export function SessionList({
+  sessions,
+  selectedDate,
+  onEditSession,
+  onCancelSession,
+  onAddSession
 }: SessionListProps) {
   const router = useRouter();
-  
+
   const getStatusVariant = (status: string) => {
     switch (status) {
       case 'SCHEDULED':
@@ -39,7 +39,7 @@ export function SessionList({
     }
   };
 
-  const sortedSessions = sessions.sort((a, b) => 
+  const sortedSessions = sessions.sort((a, b) =>
     a.startTime.localeCompare(b.startTime)
   );
 
@@ -72,7 +72,7 @@ export function SessionList({
           <div className="space-y-4">
             {sortedSessions.map(session => {
               const cost = Number(session.cost) || 0;
-              
+
               return (
                 <div
                   key={session.id}
@@ -88,8 +88,8 @@ export function SessionList({
                           {session.status}
                         </Badge>
                         {session.InvoiceLineItem ? (
-                          <Badge 
-                            variant="outline" 
+                          <Badge
+                            variant="outline"
                             className="cursor-pointer hover:bg-accent"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -108,7 +108,7 @@ export function SessionList({
                           {session.startTime} - {session.endTime}
                         </span>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-muted-foreground" />
@@ -116,26 +116,26 @@ export function SessionList({
                             {session.Patient.firstName} {session.Patient.lastName}
                           </span>
                         </div>
-                        
+
                         <div className="flex items-center gap-2">
                           <Phone className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm text-muted-foreground">
                             {session.Patient.guardianPhone}
                           </span>
                         </div>
-                        
+
                         <div className="text-sm">
                           <span className="font-medium">Therapist:</span> {session.User.firstName} {session.User.lastName}
                         </div>
-                        
+
                         <div className="text-sm">
                           <span className="font-medium">Type:</span> {session.TherapyType.name}
                         </div>
-                        
+
                         <div className="text-sm">
                           <span className="font-medium">Cost:</span> ${cost.toFixed(2)}
                         </div>
-                        
+
                         {session.notes && (
                           <div className="text-sm">
                             <span className="font-medium">Notes:</span> {session.notes}
@@ -143,7 +143,7 @@ export function SessionList({
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-2 ml-4">
                       {onEditSession && session.status !== 'COMPLETED' && (
                         <Button
@@ -154,7 +154,7 @@ export function SessionList({
                           <Edit className="h-4 w-4" />
                         </Button>
                       )}
-                      
+
                       {onCancelSession && session.status === 'SCHEDULED' && (
                         <Button
                           variant="outline"
@@ -164,6 +164,15 @@ export function SessionList({
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       )}
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push(`/audit-logs?resourceType=Session&resourceId=${session.id}`)}
+                        title="View Audit History"
+                      >
+                        <History className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </div>

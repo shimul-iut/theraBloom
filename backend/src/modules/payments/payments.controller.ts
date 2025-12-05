@@ -115,10 +115,10 @@ export class PaymentsController {
 
       // Delegate to invoices service
       const { invoicesService } = await import('../invoices/invoices.service');
-      
+
       // Calculate credit to use (same logic as old confirmPayment)
-      const creditToUse = input.useCreditAmount !== undefined 
-        ? input.useCreditAmount 
+      const creditToUse = input.useCreditAmount !== undefined
+        ? input.useCreditAmount
         : 0; // Default to 0 if not specified
 
       const result = await invoicesService.createInvoice({
@@ -217,7 +217,7 @@ export class PaymentsController {
       const confirmedBy = getUserId(req);
       const input = recordPaymentSchema.parse(req.body);
 
-      const payment = await paymentsService.recordPayment(tenantId, confirmedBy, input);
+      const payment = await paymentsService.recordPayment(tenantId, confirmedBy, input, req.auditContext);
 
       logger.info(
         `Payment recorded: ${payment.id} (${input.method}) by ${req.user?.phoneNumber}`

@@ -178,6 +178,7 @@ model Session {
   updatedAt         DateTime            @updatedAt
   ProgressReport    ProgressReport[]
   RescheduleRequest RescheduleRequest[]
+  SessionPayment    SessionPayment[]
   Patient           Patient             @relation(fields: [patientId], references: [id])
   Tenant            Tenant              @relation(fields: [tenantId], references: [id])
   User              User                @relation(fields: [therapistId], references: [id])
@@ -231,6 +232,25 @@ model InvoiceLineItem {
   @@index([sessionId])
 }
 
+model SessionPayment {
+  id            String        @id @default(uuid())
+  tenantId      String
+  sessionId     String
+  amountPaid    Decimal       @db.Decimal(10, 2)
+  amountDue     Decimal       @db.Decimal(10, 2)
+  paymentMethod PaymentMethod
+  paidAt        DateTime      @default(now())
+  dueDate       DateTime?
+  isPaidInFull  Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  Session       Session       @relation(fields: [sessionId], references: [id])
+  Tenant        Tenant        @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, sessionId])
+  @@index([tenantId, paidAt])
+}
+
 model Tenant {
   id                      String                    @id
   name                    String
@@ -246,6 +266,7 @@ model Tenant {
   ProgressReport          ProgressReport[]
   RescheduleRequest       RescheduleRequest[]
   Session                 Session[]
+  SessionPayment          SessionPayment[]
   Invoice                 Invoice[]
   TherapistAvailability   TherapistAvailability[]
   TherapistPricing        TherapistPricing[]

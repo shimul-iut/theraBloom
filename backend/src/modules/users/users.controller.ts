@@ -18,13 +18,13 @@ export class UsersController {
 
             const result = await usersService.getUsers(tenantId, page, limit, role);
 
-            res.json({
+            return res.json({
                 success: true,
                 data: result,
             });
         } catch (error) {
             logger.error('Get users error:', error);
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: {
                     code: 'FETCH_USERS_FAILED',
@@ -44,7 +44,7 @@ export class UsersController {
 
             const user = await usersService.getUserById(tenantId, userId);
 
-            res.json({
+            return res.json({
                 success: true,
                 data: user,
             });
@@ -61,7 +61,7 @@ export class UsersController {
                 });
             }
 
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: {
                     code: 'FETCH_USER_FAILED',
@@ -79,11 +79,11 @@ export class UsersController {
             const tenantId = getTenantId(req);
             const input = createUserSchema.parse(req.body);
 
-            const user = await usersService.createUser(tenantId, input);
+            const user = await usersService.createUser(tenantId, input, req.auditContext);
 
             logger.info(`User created: ${user.phoneNumber} by ${req.user?.phoneNumber}`);
 
-            res.status(201).json({
+            return res.status(201).json({
                 success: true,
                 data: user,
             });
@@ -102,7 +102,7 @@ export class UsersController {
                 }
             }
 
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: {
                     code: 'CREATE_USER_FAILED',
@@ -121,7 +121,7 @@ export class UsersController {
             const userId = req.params.id;
             const input = updateUserSchema.parse(req.body);
 
-            const user = await usersService.updateUser(tenantId, userId, input);
+            const user = await usersService.updateUser(tenantId, userId, input, req.auditContext);
 
             logger.info(`User updated: ${userId} by ${req.user?.phoneNumber}`);
 
@@ -183,11 +183,11 @@ export class UsersController {
                 });
             }
 
-            const result = await usersService.deactivateUser(tenantId, userId);
+            const result = await usersService.deactivateUser(tenantId, userId, req.auditContext);
 
             logger.info(`User deactivated: ${userId} by ${req.user?.phoneNumber}`);
 
-            res.json({
+            return res.json({
                 success: true,
                 data: result,
             });
@@ -216,7 +216,7 @@ export class UsersController {
                 }
             }
 
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: {
                     code: 'DEACTIVATE_USER_FAILED',
@@ -234,11 +234,11 @@ export class UsersController {
             const tenantId = getTenantId(req);
             const userId = req.params.id;
 
-            const result = await usersService.activateUser(tenantId, userId);
+            const result = await usersService.activateUser(tenantId, userId, req.auditContext);
 
             logger.info(`User activated: ${userId} by ${req.user?.phoneNumber}`);
 
-            res.json({
+            return res.json({
                 success: true,
                 data: result,
             });
@@ -267,7 +267,7 @@ export class UsersController {
                 }
             }
 
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: {
                     code: 'ACTIVATE_USER_FAILED',
@@ -285,11 +285,11 @@ export class UsersController {
             const userId = getUserId(req);
             const input = changePasswordSchema.parse(req.body);
 
-            const result = await usersService.changePassword(userId, input);
+            const result = await usersService.changePassword(userId, input, req.auditContext);
 
             logger.info(`Password changed for user: ${userId}`);
 
-            res.json({
+            return res.json({
                 success: true,
                 data: result,
             });
@@ -308,7 +308,7 @@ export class UsersController {
                 }
             }
 
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
                 error: {
                     code: 'CHANGE_PASSWORD_FAILED',

@@ -349,7 +349,12 @@ This implementation uses an invoice-based payment model where payments are track
   - Add "Create Invoice" button if uninvoiced sessions exist
   - _Requirements: 2.2, 2.3, 2.4, 8.1_
 
-- [ ] 12. Update session list components
+- [x] 12. Update session list components
+
+
+
+
+
 
 
 
@@ -364,7 +369,12 @@ This implementation uses an invoice-based payment model where payments are track
   - Link to invoice when session is invoiced
   - _Requirements: 1.1, 1.2_
 
-- [ ] 13. Add cancellation notifications
+- [x] 13. Add cancellation notifications
+
+
+
+
+
   - Show notification when session cancelled with credit added
   - Show notification when session cancelled with dues reduced
   - Display amount of credit/dues adjustment

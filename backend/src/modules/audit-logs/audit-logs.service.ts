@@ -11,8 +11,11 @@ export class AuditLogsService {
     userId: string,
     input: CreateAuditLogInput
   ) {
+    const { randomUUID } = await import('crypto');
+
     const auditLog = await prisma.auditLog.create({
       data: {
+        id: randomUUID(),
         tenantId,
         userId,
         action: input.action,
@@ -23,7 +26,7 @@ export class AuditLogsService {
         userAgent: input.metadata?.userAgent,
       },
       include: {
-        user: {
+        User: {
           select: {
             id: true,
             firstName: true,
@@ -78,7 +81,7 @@ export class AuditLogsService {
         take: limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          user: {
+          User: {
             select: {
               id: true,
               firstName: true,
@@ -113,7 +116,7 @@ export class AuditLogsService {
         tenantId,
       },
       include: {
-        user: {
+        User: {
           select: {
             id: true,
             firstName: true,
@@ -155,7 +158,7 @@ export class AuditLogsService {
         take: limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          user: {
+          User: {
             select: {
               id: true,
               firstName: true,
@@ -207,7 +210,7 @@ export class AuditLogsService {
         take: limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          user: {
+          User: {
             select: {
               id: true,
               firstName: true,
@@ -320,6 +323,23 @@ export class AuditLogsService {
       })),
       mostActiveUsers: mostActiveUsersWithDetails,
     };
+  }
+
+  /**
+   * Get count of audit logs for a specific resource
+   */
+  async getLogCount(
+    tenantId: string,
+    resourceType: string,
+    resourceId: string
+  ): Promise<number> {
+    return await prisma.auditLog.count({
+      where: {
+        tenantId,
+        resourceType,
+        resourceId,
+      },
+    });
   }
 
   /**

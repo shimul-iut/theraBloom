@@ -34,6 +34,7 @@ export function requireTenant(req: Request, res: Response, next: NextFunction) {
   }
 
   next();
+  return;
 }
 
 /**

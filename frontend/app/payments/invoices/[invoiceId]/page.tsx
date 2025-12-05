@@ -7,6 +7,7 @@ import { ErrorMessage } from '@/components/shared/error-boundary';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { InvoiceView } from '@/components/invoices/invoice-view';
+import { AuditLogButton } from '@/components/audit/audit-log-button';
 
 export default function InvoicePage() {
   const params = useParams();
@@ -50,6 +51,7 @@ export default function InvoicePage() {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
+        <AuditLogButton resourceType="Invoice" resourceId={invoiceId} />
       </div>
 
       <InvoiceView invoiceData={invoiceData} />
