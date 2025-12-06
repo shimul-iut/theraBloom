@@ -301,6 +301,14 @@ export class InvoicesService {
 
     // Log audit trail
     if (auditContext) {
+      // Get the creator's name for the description
+      const creator = await prisma.user.findUnique({
+        where: { id: auditContext.userId },
+        select: { firstName: true, lastName: true },
+      });
+
+      const description = `${creator?.firstName} ${creator?.lastName} created invoice ${result.invoice.invoiceNumber} for patient ${result.patient.firstName} ${result.patient.lastName} with ${sessionIds.length} session(s) totaling BDT ${result.invoice.totalAmount.toFixed(2)}`;
+
       await auditLogsService.logAction(
         tenantId,
         auditContext.userId,
@@ -311,7 +319,8 @@ export class InvoicesService {
         {
           ip: auditContext.ipAddress,
           userAgent: auditContext.userAgent,
-        }
+        },
+        description
       );
     }
 

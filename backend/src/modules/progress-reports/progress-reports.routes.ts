@@ -2,11 +2,15 @@ import { Router } from 'express';
 import { progressReportsController } from './progress-reports.controller';
 import { authenticate } from '../../middleware/auth';
 import { requireTherapist } from '../../middleware/rbac';
+import { setAuditContext } from '../../middleware/audit.middleware';
 
 const router = Router();
 
 // All routes require authentication
 router.use(authenticate);
+
+// Set audit context after authentication
+router.use(setAuditContext);
 
 /**
  * GET /api/v1/progress-reports

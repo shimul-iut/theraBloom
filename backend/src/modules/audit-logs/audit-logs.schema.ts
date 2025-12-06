@@ -16,6 +16,7 @@ export const createAuditLogSchema = z.object({
   action: z.nativeEnum(AuditAction),
   entityType: z.string().min(1),
   entityId: z.string().min(1),
+  description: z.string().optional(),
   changes: z.record(z.any()).optional(),
   metadata: z.record(z.any()).optional(),
 });

@@ -265,7 +265,23 @@ export class SessionsService {
       },
     });
 
+
     if (auditContext) {
+      // Get the creator's name for the description
+      const creator = await prisma.user.findUnique({
+        where: { id: auditContext.userId },
+        select: { firstName: true, lastName: true },
+      });
+
+      const formattedDate = scheduledDate.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      const description = `${creator?.firstName} ${creator?.lastName} scheduled ${session.TherapyType.name} session for patient ${session.Patient.firstName} ${session.Patient.lastName} with therapist ${session.User.firstName} ${session.User.lastName} on ${formattedDate} from ${input.startTime} to ${input.endTime}`;
+
       await auditLogsService.logAction(
         tenantId,
         auditContext.userId,
@@ -276,7 +292,8 @@ export class SessionsService {
         {
           ip: auditContext.ipAddress,
           userAgent: auditContext.userAgent,
-        }
+        },
+        description
       );
     }
 

@@ -189,16 +189,19 @@ export function AuditLogsFilters({
         <div className="space-y-2">
           <Label>Action</Label>
           <Select
-            value={filters.action || ''}
+            value={filters.action || 'ALL'}
             onValueChange={(action) =>
-              onFiltersChange({ ...filters, action: action || undefined })
+              onFiltersChange({
+                ...filters,
+                action: action === 'ALL' ? undefined : action,
+              })
             }
           >
             <SelectTrigger>
               <SelectValue placeholder="All Actions" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Actions</SelectItem>
+              <SelectItem value="ALL">All Actions</SelectItem>
               <SelectItem value="CREATE">Create</SelectItem>
               <SelectItem value="UPDATE">Update</SelectItem>
               <SelectItem value="DELETE">Delete</SelectItem>
@@ -213,9 +216,12 @@ export function AuditLogsFilters({
         <div className="space-y-2">
           <Label>Resource Type</Label>
           <Select
-            value={filters.resourceType || ''}
+            value={filters.resourceType || 'ALL'}
             onValueChange={(resourceType) =>
-              onFiltersChange({ ...filters, resourceType: resourceType || undefined })
+              onFiltersChange({
+                ...filters,
+                resourceType: resourceType === 'ALL' ? undefined : resourceType,
+              })
             }
             disabled={!!presetContext?.resourceType}
           >
@@ -223,7 +229,7 @@ export function AuditLogsFilters({
               <SelectValue placeholder="All Resources" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Resources</SelectItem>
+              <SelectItem value="ALL">All Resources</SelectItem>
               <SelectItem value="Patient">Patient</SelectItem>
               <SelectItem value="Therapist">Therapist</SelectItem>
               <SelectItem value="Session">Session</SelectItem>

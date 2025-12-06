@@ -21,6 +21,7 @@ export class AuditLogsService {
         action: input.action,
         resourceType: input.entityType,
         resourceId: input.entityId,
+        description: input.description,
         changes: input.changes || {},
         ipAddress: input.metadata?.ip,
         userAgent: input.metadata?.userAgent,
@@ -352,15 +353,31 @@ export class AuditLogsService {
     entityType: string,
     entityId: string,
     changes?: Record<string, any>,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
+    description?: string
   ) {
-    return this.createAuditLog(tenantId, userId, {
+    console.log('🔍 DEBUG logAction called:', {
+      tenantId,
+      userId,
       action,
       entityType,
       entityId,
+      hasChanges: !!changes,
+      hasMetadata: !!metadata,
+      description,
+    });
+
+    const result = await this.createAuditLog(tenantId, userId, {
+      action,
+      entityType,
+      entityId,
+      description,
       changes,
       metadata,
     });
+
+    console.log('✅ Audit log created with ID:', result.id);
+    return result;
   }
 }
 

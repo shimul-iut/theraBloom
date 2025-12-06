@@ -2,11 +2,13 @@ import { Router } from 'express';
 import { expensesController } from './expenses.controller';
 import { authenticate } from '../../middleware/auth';
 import { requireAdminOrOperator } from '../../middleware/rbac';
+import { setAuditContext } from '../../middleware/audit.middleware';
 
 const router = Router();
 
 // All routes require authentication and admin/operator role
 router.use(authenticate);
+router.use(setAuditContext);
 router.use(requireAdminOrOperator);
 
 /**

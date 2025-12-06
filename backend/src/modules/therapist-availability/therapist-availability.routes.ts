@@ -2,11 +2,15 @@ import { Router } from 'express';
 import { therapistAvailabilityController } from './therapist-availability.controller';
 import { authenticate } from '../../middleware/auth';
 import { requireAdminOrOperator } from '../../middleware/rbac';
+import { setAuditContext } from '../../middleware/audit.middleware';
 
 const router = Router();
 
 // All routes require authentication
 router.use(authenticate);
+
+// Set audit context after authentication
+router.use(setAuditContext);
 
 /**
  * GET /api/v1/therapists/:therapistId/availability

@@ -133,8 +133,17 @@ export class PatientsService {
       },
     });
 
+
     // Log audit trail
     if (auditContext) {
+      // Get the creator's name for the description
+      const creator = await prisma.user.findUnique({
+        where: { id: auditContext.userId },
+        select: { firstName: true, lastName: true },
+      });
+
+      const description = `${creator?.firstName} ${creator?.lastName} created patient ${patient.firstName} ${patient.lastName} (Guardian: ${patient.guardianName}, Phone: ${patient.guardianPhone})`;
+
       await auditLogsService.logAction(
         tenantId,
         auditContext.userId,
@@ -145,7 +154,8 @@ export class PatientsService {
         {
           ip: auditContext.ipAddress,
           userAgent: auditContext.userAgent,
-        }
+        },
+        description
       );
     }
 
@@ -208,7 +218,7 @@ export class PatientsService {
     // Calculate changes for audit log
     if (auditContext) {
       const changes: Record<string, { old: any; new: any }> = {};
-      
+
       if (input.firstName && input.firstName !== existingPatient.firstName) {
         changes.firstName = { old: existingPatient.firstName, new: input.firstName };
       }

@@ -2,11 +2,15 @@ import { Router } from 'express';
 import { rescheduleRequestsController } from './reschedule-requests.controller';
 import { authenticate } from '../../middleware/auth';
 import { requireTherapist, requireAdminOrOperator } from '../../middleware/rbac';
+import { setAuditContext } from '../../middleware/audit.middleware';
 
 const router = Router();
 
 // All routes require authentication
 router.use(authenticate);
+
+// Set audit context after authentication
+router.use(setAuditContext);
 
 /**
  * GET /api/v1/reschedule-requests

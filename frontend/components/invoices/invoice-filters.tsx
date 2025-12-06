@@ -37,12 +37,17 @@ export function InvoiceFilters({
         <div className="grid gap-4 md:grid-cols-3">
           <div className="space-y-2">
             <Label htmlFor="therapist">Therapist</Label>
-            <Select value={selectedTherapist} onValueChange={onTherapistChange}>
+            <Select
+              value={selectedTherapist || 'ALL'}
+              onValueChange={(val) =>
+                onTherapistChange(val === 'ALL' ? '' : val)
+              }
+            >
               <SelectTrigger id="therapist">
                 <SelectValue placeholder="All therapists" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All therapists</SelectItem>
+                <SelectItem value="ALL">All therapists</SelectItem>
                 {therapists.map((therapist) => (
                   <SelectItem key={therapist.id} value={therapist.id}>
                     {therapist.name}

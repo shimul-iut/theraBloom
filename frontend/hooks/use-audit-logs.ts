@@ -8,6 +8,7 @@ export interface AuditLog {
   action: 'CREATE' | 'UPDATE' | 'DELETE' | 'CANCEL' | 'LOGIN' | 'LOGOUT';
   resourceType: string;
   resourceId: string;
+  description: string | null;
   changes: Record<string, { old: any; new: any }> | null;
   ipAddress: string | null;
   userAgent: string | null;
@@ -47,7 +48,7 @@ export interface AuditLogsResponse {
  */
 export function useAuditLogs(filters: AuditLogFilters = {}) {
   const queryParams = new URLSearchParams();
-  
+
   if (filters.userId) queryParams.append('userId', filters.userId);
   if (filters.action) queryParams.append('action', filters.action);
   if (filters.resourceType) queryParams.append('entityType', filters.resourceType);
@@ -91,7 +92,7 @@ export function useAuditLogCount(resourceType?: string, resourceId?: string) {
       const params = new URLSearchParams();
       if (resourceType) params.append('resourceType', resourceType);
       if (resourceId) params.append('resourceId', resourceId);
-      
+
       const response = await api.get(`/audit-logs/count?${params.toString()}`);
       return response.data.data as { count: number };
     },

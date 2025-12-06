@@ -148,8 +148,20 @@ export class UsersService {
       },
     });
 
+
     // Log audit trail
+    console.log('🔍 DEBUG: auditContext in createUser:', auditContext);
     if (auditContext) {
+      console.log('✅ Logging audit action for user creation:', user.id);
+
+      // Get the creator's name for the description
+      const creator = await prisma.user.findUnique({
+        where: { id: auditContext.userId },
+        select: { firstName: true, lastName: true },
+      });
+
+      const description = `${creator?.firstName} ${creator?.lastName} created user ${user.firstName} ${user.lastName} (${user.phoneNumber}) with role ${user.role}`;
+
       await auditLogsService.logAction(
         tenantId,
         auditContext.userId,
@@ -160,8 +172,12 @@ export class UsersService {
         {
           ip: auditContext.ipAddress,
           userAgent: auditContext.userAgent,
-        }
+        },
+        description
       );
+      console.log('✅ Audit log created successfully');
+    } else {
+      console.log('❌ No auditContext - audit log NOT created');
     }
 
     return user;
@@ -235,7 +251,7 @@ export class UsersService {
     // Calculate changes for audit log
     if (auditContext) {
       const changes: Record<string, { old: any; new: any }> = {};
-      
+
       if (input.firstName && input.firstName !== existingUser.firstName) {
         changes.firstName = { old: existingUser.firstName, new: input.firstName };
       }

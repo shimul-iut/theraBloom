@@ -112,10 +112,16 @@ export function AuditLogsTable({ logs }: AuditLogsTableProps) {
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {log.changes && Object.keys(log.changes).length > 0
-                    ? `${Object.keys(log.changes).length} field(s) changed`
-                    : 'No changes recorded'}
+                <TableCell className="text-sm max-w-md">
+                  {log.description ? (
+                    <span className="text-foreground">{log.description}</span>
+                  ) : log.changes && Object.keys(log.changes).length > 0 ? (
+                    <span className="text-muted-foreground">
+                      {Object.keys(log.changes).length} field(s) changed
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">No details recorded</span>
+                  )}
                 </TableCell>
               </TableRow>
 
@@ -124,6 +130,14 @@ export function AuditLogsTable({ logs }: AuditLogsTableProps) {
                 <TableRow>
                   <TableCell colSpan={6} className="bg-muted/30">
                     <div className="p-4 space-y-4">
+                      {/* Description */}
+                      {log.description && (
+                        <div>
+                          <h4 className="font-semibold mb-2">Description:</h4>
+                          <p className="text-sm">{log.description}</p>
+                        </div>
+                      )}
+
                       {/* Changes */}
                       {log.changes && Object.keys(log.changes).length > 0 && (
                         <div>
